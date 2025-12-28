@@ -1,5 +1,6 @@
 package com.travelms.payment.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stripe.model.PaymentIntent;
 import com.travelms.payment.dto.*;
 import com.travelms.payment.event.PaymentCompletedEvent;
@@ -38,6 +39,7 @@ public class PaymentService {
     private final PayPalService payPalService;
     private final PaymentMethodService paymentMethodService;
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final ObjectMapper objectMapper;
     private CheckoutService checkoutService; // Lazy injection to avoid circular dependency
 
     @Value("${kafka.topics.payment-completed}")
@@ -638,12 +640,29 @@ public class PaymentService {
      */
     private void publishPaymentCompletedEvent(Payment payment) {
         try {
+            // Extract numberOfParticipants from booking details JSON if available
+            Integer numberOfParticipants = null;
+            if (payment.getPendingBookingDetails() != null && !payment.getPendingBookingDetails().isEmpty()) {
+                try {
+                    Map<String, Object> bookingDetails = objectMapper.readValue(
+                            payment.getPendingBookingDetails(),
+                            Map.class
+                    );
+                    numberOfParticipants = (Integer) bookingDetails.get("numberOfParticipants");
+                } catch (Exception e) {
+                    log.warn("Failed to parse numberOfParticipants from booking details: {}", e.getMessage());
+                    numberOfParticipants = 1; // Default to 1 participant
+                }
+            } else {
+                numberOfParticipants = 1; // Default to 1 participant
+            }
+
             PaymentCompletedEvent event = PaymentCompletedEvent.builder()
                     .paymentId(payment.getId())
                     .userId(payment.getUserId())
                     .userName(null) // Can be enriched from user-service if needed
                     .travelId(payment.getTravelId())
-                    .numberOfParticipants(payment.getNumberOfParticipants())
+                    .numberOfParticipants(numberOfParticipants)
                     .amount(payment.getAmount())
                     .currency(payment.getCurrency())
                     .completedAt(payment.getPaidAt())

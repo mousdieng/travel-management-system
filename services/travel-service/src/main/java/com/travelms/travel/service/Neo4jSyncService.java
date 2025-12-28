@@ -148,4 +148,53 @@ public class Neo4jSyncService {
             log.warn("Could not sync feedback: nodes not found");
         }
     }
+
+    @Transactional
+    public void deleteTravelNode(Long travelId) {
+        try {
+            travelNodeRepository.findByTravelId(travelId).ifPresent(travelNode -> {
+                travelNodeRepository.delete(travelNode);
+                log.info("Deleted travel node for travel: {}", travelId);
+            });
+        } catch (Exception e) {
+            log.error("Failed to delete travel node for travel {}: {}", travelId, e.getMessage());
+            throw e;
+        }
+    }
+
+    @Transactional
+    public void deleteSubscriptionRelationship(Long travelerId, Long travelId) {
+        try {
+            Optional<TravelerNode> travelerNode = travelerNodeRepository.findByUserId(travelerId);
+            Optional<TravelNode> travelNode = travelNodeRepository.findByTravelId(travelId);
+
+            if (travelerNode.isPresent() && travelNode.isPresent()) {
+                TravelerNode traveler = travelerNode.get();
+                TravelNode travel = travelNode.get();
+
+                // Remove subscription relationship
+                traveler.getSubscribedTravels().remove(travel);
+                travelerNodeRepository.save(traveler);
+
+                log.info("Deleted subscription relationship: Traveler {} from Travel {}", travelerId, travelId);
+            }
+        } catch (Exception e) {
+            log.error("Failed to delete subscription relationship for traveler {} and travel {}: {}",
+                    travelerId, travelId, e.getMessage());
+            throw e;
+        }
+    }
+
+    @Transactional
+    public void deleteTravelerNode(Long userId) {
+        try {
+            travelerNodeRepository.findByUserId(userId).ifPresent(travelerNode -> {
+                travelerNodeRepository.delete(travelerNode);
+                log.info("Deleted traveler node for user: {}", userId);
+            });
+        } catch (Exception e) {
+            log.error("Failed to delete traveler node for user {}: {}", userId, e.getMessage());
+            throw e;
+        }
+    }
 }

@@ -268,7 +268,10 @@ public class SubscriptionService {
 
             // Delete from Neo4j
             try {
-                neo4jSyncService.deleteSubscriptionRelationship(subscription.getId());
+                neo4jSyncService.deleteSubscriptionRelationship(
+                    subscription.getTravelerId(),
+                    subscription.getTravel().getId()
+                );
             } catch (Exception e) {
                 log.warn("Failed to delete subscription {} from Neo4j: {}",
                     subscription.getId(), e.getMessage());
