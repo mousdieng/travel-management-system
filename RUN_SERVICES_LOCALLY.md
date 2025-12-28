@@ -40,10 +40,15 @@ Each service's `application.yml` contains:
 ```yaml
 spring:
   config:
-    import: optional:file:../../.env[.properties]
+    import: optional:file:/home/moussa/dev/travel-management-system/.env[.properties]
 ```
 
-This configuration tells Spring Boot to import the `.env` file from the project root (two directories up from the service directory) as a property source. The `optional:` prefix means the application will start even if the `.env` file doesn't exist (falling back to default values).
+This configuration tells Spring Boot to import the `.env` file using an **absolute path** as a property source. Key points:
+
+- **Absolute path**: Ensures the file is found regardless of working directory
+- **`optional:` prefix**: Application starts even if `.env` doesn't exist (falls back to defaults)
+- **`[.properties]` suffix**: Spring Boot tries both `.env.properties` and `.env` files
+- **Native Spring Boot**: No third-party libraries needed (works since Spring Boot 2.4+)
 
 ## IntelliJ IDEA
 
