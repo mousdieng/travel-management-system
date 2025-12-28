@@ -1,0 +1,248 @@
+<div class="payment-create-container">
+  <!-- Payment Header -->
+  <mat-card class="payment-header-card">
+    <div class="header-content">
+      <div class="header-icon">
+        <mat-icon>payment</mat-icon>
+      </div>
+      <div class="header-text">
+        <h1>Complete Payment</h1>
+        <p>Secure payment processing</p>
+      </div>
+    </div>
+  </mat-card>
+
+  <div class="payment-layout" *ngIf="paymentDetails">
+    <!-- Left Column - Payment Form -->
+    <div class="payment-form-column">
+      <mat-card class="payment-method-card">
+        <mat-card-header>
+          <mat-card-title>Select Payment Method</mat-card-title>
+        </mat-card-header>
+
+        <mat-card-content>
+          <form [formGroup]="paymentForm">
+            <!-- Payment Method Selection -->
+            <div class="payment-methods">
+              <!-- Saved Payment Methods -->
+              <div
+                *ngIf="savedPaymentMethods.length > 0"
+                class="payment-option"
+                [class.active]="selectedPaymentMethod === 'saved'">
+                <mat-radio-button value="saved" [checked]="selectedPaymentMethod === 'saved'" (change)="onPaymentMethodChange('saved')">
+                  <div class="option-content">
+                    <mat-icon>account_balance_wallet</mat-icon>
+                    <span>Saved Payment Methods</span>
+                  </div>
+                </mat-radio-button>
+              </div>
+
+              <!-- Saved Methods List -->
+              <div *ngIf="selectedPaymentMethod === 'saved'" class="saved-methods-list">
+                <div
+                  *ngFor="let method of savedPaymentMethods"
+                  class="saved-method-item"
+                  [class.selected]="selectedSavedMethod?.id === method.id"
+                  (click)="onSavedMethodSelect(method)">
+                  <mat-icon>{{ getPaymentMethodIcon(method.type) }}</mat-icon>
+                  <div class="method-details">
+                    <strong>{{ method.displayName }}</strong>
+                    <span *ngIf="method.isDefault" class="default-badge">Default</span>
+                  </div>
+                  <mat-icon class="check-icon">{{ selectedSavedMethod?.id === method.id ? 'radio_button_checked' : 'radio_button_unchecked' }}</mat-icon>
+                </div>
+              </div>
+
+              <mat-divider></mat-divider>
+
+              <!-- New Card Payment -->
+              <div
+                class="payment-option"
+                [class.active]="selectedPaymentMethod === 'new_card'">
+                <mat-radio-button value="new_card" [checked]="selectedPaymentMethod === 'new_card'" (change)="onPaymentMethodChange('new_card')">
+                  <div class="option-content">
+                    <mat-icon>credit_card</mat-icon>
+                    <span>Credit or Debit Card</span>
+                  </div>
+                </mat-radio-button>
+              </div>
+
+              <mat-divider></mat-divider>
+
+              <!-- PayPal Payment -->
+              <div
+                class="payment-option"
+                [class.active]="selectedPaymentMethod === 'paypal'">
+                <mat-radio-button value="paypal" [checked]="selectedPaymentMethod === 'paypal'" (change)="onPaymentMethodChange('paypal')">
+                  <div class="option-content">
+                    <mat-icon>account_balance_wallet</mat-icon>
+                    <span>PayPal</span>
+                  </div>
+                </mat-radio-button>
+              </div>
+            </div>
+
+            <!-- Billing Information -->
+            <div class="billing-section" *ngIf="selectedPaymentMethod !== 'saved'">
+              <h3>Billing Information</h3>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Full Name</mat-label>
+                <input matInput formControlName="billingName" placeholder="John Doe">
+                <mat-icon matPrefix>person</mat-icon>
+                <mat-error *ngIf="paymentForm.get('billingName')?.hasError('required')">
+                  Name is required
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Email</mat-label>
+                <input matInput type="email" formControlName="billingEmail" placeholder="john@example.com">
+                <mat-icon matPrefix>email</mat-icon>
+                <mat-error *ngIf="paymentForm.get('billingEmail')?.hasError('required')">
+                  Email is required
+                </mat-error>
+                <mat-error *ngIf="paymentForm.get('billingEmail')?.hasError('email')">
+                  Please enter a valid email
+                </mat-error>
+              </mat-form-field>
+
+              <!-- Save Payment Method -->
+              <mat-checkbox
+                *ngIf="selectedPaymentMethod === 'new_card'"
+                formControlName="savePaymentMethod"
+                class="save-method-checkbox">
+                Save this payment method for future purchases
+              </mat-checkbox>
+            </div>
+
+            <!-- Stripe Card Form -->
+            <div *ngIf="selectedPaymentMethod === 'new_card' && stripeClientSecret" class="payment-widget">
+              <app-stripe-card-form
+                [amount]="paymentDetails.amount"
+                [currency]="paymentDetails.currency"
+                [clientSecret]="stripeClientSecret"
+                (paymentCompleted)="onStripePaymentCompleted($event)"
+                (paymentFailed)="onStripePaymentError($event)">
+              </app-stripe-card-form>
+            </div>
+
+            <!-- PayPal Button -->
+            <div *ngIf="selectedPaymentMethod === 'paypal' && paypalOrderId" class="payment-widget">
+              <app-paypal-button
+                [amount]="paymentDetails.amount"
+                [currency]="paymentDetails.currency"
+                [orderId]="paypalOrderId"
+                (paymentCompleted)="onPayPalPaymentCompleted($event)"
+                (paymentCancelled)="onPayPalPaymentCancelled()"
+                (paymentError)="onPayPalPaymentError($event)">
+              </app-paypal-button>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons" *ngIf="!stripeClientSecret && !paypalOrderId">
+              <button
+                mat-raised-button
+                color="primary"
+                type="button"
+                (click)="processPayment()"
+                [disabled]="paymentForm.invalid || isProcessing"
+                class="pay-button">
+                <mat-icon>{{ isProcessing ? 'hourglass_empty' : 'lock' }}</mat-icon>
+                {{ isProcessing ? 'Processing...' : 'Pay ' + formatCurrency(paymentDetails.amount, paymentDetails.currency) }}
+              </button>
+              <button
+                mat-stroked-button
+                type="button"
+                (click)="cancel()"
+                [disabled]="isProcessing">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Security Notice -->
+      <div class="security-notice">
+        <mat-icon>verified_user</mat-icon>
+        <div class="notice-content">
+          <strong>Your payment is secure</strong>
+          <p>All transactions are encrypted and processed securely. We never store your full payment details.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column - Order Summary -->
+    <div class="order-summary-column">
+      <mat-card class="order-summary-card">
+        <mat-card-header>
+          <mat-card-title>Order Summary</mat-card-title>
+        </mat-card-header>
+
+        <mat-card-content>
+          <!-- Payment Details -->
+          <div class="summary-section">
+            <h3>Payment Details</h3>
+            <div class="summary-item">
+              <span>Description</span>
+              <strong>{{ paymentDetails.description }}</strong>
+            </div>
+            <div class="summary-item" *ngIf="paymentDetails.bookingId">
+              <span>Booking ID</span>
+              <strong>{{ paymentDetails.bookingId }}</strong>
+            </div>
+          </div>
+
+          <mat-divider></mat-divider>
+
+          <!-- Price Breakdown -->
+          <div class="summary-section">
+            <h3>Price Breakdown</h3>
+            <div class="summary-item">
+              <span>Subtotal</span>
+              <span>{{ formatCurrency(paymentDetails.amount * 0.9, paymentDetails.currency) }}</span>
+            </div>
+            <div class="summary-item">
+              <span>Taxes & Fees</span>
+              <span>{{ formatCurrency(paymentDetails.amount * 0.1, paymentDetails.currency) }}</span>
+            </div>
+          </div>
+
+          <mat-divider></mat-divider>
+
+          <!-- Total -->
+          <div class="total-section">
+            <div class="total-item">
+              <strong>Total Amount</strong>
+              <strong class="total-amount">{{ formatCurrency(paymentDetails.amount, paymentDetails.currency) }}</strong>
+            </div>
+          </div>
+
+          <!-- Payment Icons -->
+          <div class="payment-icons">
+            <span>We accept</span>
+            <div class="icons">
+              <mat-icon>credit_card</mat-icon>
+              <mat-icon>account_balance</mat-icon>
+              <mat-icon>account_balance_wallet</mat-icon>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Support Card -->
+      <mat-card class="support-card">
+        <mat-card-content>
+          <mat-icon>help</mat-icon>
+          <h3>Need Help?</h3>
+          <p>Contact our support team if you have any questions about payment.</p>
+          <button mat-stroked-button color="primary">
+            <mat-icon>support_agent</mat-icon>
+            Contact Support
+          </button>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>

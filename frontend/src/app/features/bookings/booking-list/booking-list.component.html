@@ -1,0 +1,308 @@
+<div class="booking-list-container">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Bookings Management</h1>
+      <p class="subtitle">Manage and track all customer bookings</p>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="createBooking()">
+        <mat-icon>add</mat-icon>
+        New Booking
+      </button>
+      <button mat-stroked-button (click)="exportBookings()">
+        <mat-icon>download</mat-icon>
+        Export
+      </button>
+    </div>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="stats-grid" *ngIf="stats">
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon" style="background: #e3f2fd;">
+          <mat-icon color="primary">event_note</mat-icon>
+        </div>
+        <div class="stat-details">
+          <span class="stat-label">Total Bookings</span>
+          <span class="stat-value">{{ stats.totalBookings }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon" style="background: #fff3e0;">
+          <mat-icon style="color: #ff9800;">schedule</mat-icon>
+        </div>
+        <div class="stat-details">
+          <span class="stat-label">Pending</span>
+          <span class="stat-value">{{ stats.pendingBookings }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon" style="background: #e8f5e9;">
+          <mat-icon style="color: #4caf50;">check_circle</mat-icon>
+        </div>
+        <div class="stat-details">
+          <span class="stat-label">Confirmed</span>
+          <span class="stat-value">{{ stats.confirmedBookings }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon" style="background: #f3e5f5;">
+          <mat-icon style="color: #9c27b0;">attach_money</mat-icon>
+        </div>
+        <div class="stat-details">
+          <span class="stat-label">Total Revenue</span>
+          <span class="stat-value">{{ formatCurrency(stats.totalRevenue) }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Filter Section -->
+  <mat-card class="filter-card">
+    <mat-card-content>
+      <div class="filter-container">
+        <!-- Search -->
+        <mat-form-field appearance="outline" class="filter-field search-field">
+          <mat-label>Search</mat-label>
+          <input matInput [formControl]="searchControl" placeholder="Booking ref, user, or travel">
+          <mat-icon matPrefix>search</mat-icon>
+        </mat-form-field>
+
+        <!-- Status Filter -->
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Status</mat-label>
+          <mat-select [formControl]="statusControl" multiple>
+            <mat-option *ngFor="let status of statusOptions" [value]="status.value">
+              <mat-icon [style.color]="status.color">{{ status.icon }}</mat-icon>
+              {{ status.label }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Start Date -->
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Start Date</mat-label>
+          <input matInput [matDatepicker]="startPicker" [formControl]="startDateControl">
+          <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+          <mat-datepicker #startPicker></mat-datepicker>
+        </mat-form-field>
+
+        <!-- End Date -->
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>End Date</mat-label>
+          <input matInput [matDatepicker]="endPicker" [formControl]="endDateControl">
+          <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+          <mat-datepicker #endPicker></mat-datepicker>
+        </mat-form-field>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Bulk Actions -->
+  <div class="bulk-actions" *ngIf="selection.selected.length > 0">
+    <span class="selection-count">{{ selection.selected.length }} selected</span>
+    <button mat-button (click)="bulkCancel()">
+      <mat-icon>cancel</mat-icon>
+      Cancel Selected
+    </button>
+    <button mat-button (click)="selection.clear()">
+      <mat-icon>clear</mat-icon>
+      Clear Selection
+    </button>
+  </div>
+
+  <!-- Table Section -->
+  <mat-card class="table-card">
+    <div class="table-container">
+      <!-- Loading Spinner -->
+      <div class="loading-overlay" *ngIf="isLoading">
+        <mat-spinner diameter="50"></mat-spinner>
+      </div>
+
+      <table mat-table [dataSource]="dataSource" matSort class="bookings-table">
+        <!-- Checkbox Column -->
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef>
+            <mat-checkbox
+              (change)="$event ? toggleAllRows() : null"
+              [checked]="selection.hasValue() && isAllSelected()"
+              [indeterminate]="selection.hasValue() && !isAllSelected()">
+            </mat-checkbox>
+          </th>
+          <td mat-cell *matCellDef="let row">
+            <mat-checkbox
+              (click)="$event.stopPropagation()"
+              (change)="$event ? selection.toggle(row) : null"
+              [checked]="selection.isSelected(row)">
+            </mat-checkbox>
+          </td>
+        </ng-container>
+
+        <!-- Booking Reference Column -->
+        <ng-container matColumnDef="bookingReference">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Reference</th>
+          <td mat-cell *matCellDef="let booking">
+            <span class="booking-reference">{{ booking.bookingReference }}</span>
+          </td>
+        </ng-container>
+
+        <!-- User Column -->
+        <ng-container matColumnDef="user">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Customer</th>
+          <td mat-cell *matCellDef="let booking">
+            <div class="user-info">
+              <span class="user-name">{{ booking.user?.firstName }} {{ booking.user?.lastName }}</span>
+              <span class="user-email">{{ booking.user?.email }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Travel Column -->
+        <ng-container matColumnDef="travel">
+          <th mat-header-cell *matHeaderCellDef>Travel</th>
+          <td mat-cell *matCellDef="let booking">
+            <div class="travel-info">
+              <span class="travel-title">{{ booking.travel?.title }}</span>
+              <span class="travel-destination">
+                <mat-icon class="small-icon">location_on</mat-icon>
+                {{ booking.travel?.destination?.name }}
+              </span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Travel Date Column -->
+        <ng-container matColumnDef="travelDate">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Travel Date</th>
+          <td mat-cell *matCellDef="let booking">
+            <div class="date-info">
+              <span class="date">{{ booking.travelStartDate | date:'mediumDate' }}</span>
+              <span class="duration">{{ booking.travel?.duration }} days</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Passengers Column -->
+        <ng-container matColumnDef="passengers">
+          <th mat-header-cell *matHeaderCellDef>Passengers</th>
+          <td mat-cell *matCellDef="let booking">
+            <mat-chip-set>
+              <mat-chip>
+                <mat-icon>people</mat-icon>
+                {{ booking.numberOfPassengers }}
+              </mat-chip>
+            </mat-chip-set>
+          </td>
+        </ng-container>
+
+        <!-- Amount Column -->
+        <ng-container matColumnDef="amount">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Amount</th>
+          <td mat-cell *matCellDef="let booking">
+            <span class="amount">{{ formatCurrency(booking.pricing.totalAmount, booking.pricing.currency) }}</span>
+          </td>
+        </ng-container>
+
+        <!-- Status Column -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+          <td mat-cell *matCellDef="let booking">
+            <mat-chip [style.background-color]="getStatusColor(booking.status)" class="status-chip">
+              <mat-icon>{{ getStatusIcon(booking.status) }}</mat-icon>
+              {{ booking.status }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Booking Date Column -->
+        <ng-container matColumnDef="bookingDate">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Booked On</th>
+          <td mat-cell *matCellDef="let booking">
+            {{ booking.bookingDate | date:'short' }}
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let booking">
+            <button mat-icon-button [matMenuTriggerFor]="actionsMenu" (click)="$event.stopPropagation()">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #actionsMenu="matMenu">
+              <button mat-menu-item (click)="viewBooking(booking)">
+                <mat-icon>visibility</mat-icon>
+                <span>View Details</span>
+              </button>
+              <button mat-menu-item
+                      (click)="confirmBooking(booking)"
+                      *ngIf="booking.status === 'PENDING'">
+                <mat-icon>check_circle</mat-icon>
+                <span>Confirm</span>
+              </button>
+              <button mat-menu-item
+                      (click)="processPayment(booking)"
+                      *ngIf="booking.status === 'CONFIRMED' && !booking.paymentId">
+                <mat-icon>payment</mat-icon>
+                <span>Process Payment</span>
+              </button>
+              <button mat-menu-item (click)="downloadConfirmation(booking)">
+                <mat-icon>download</mat-icon>
+                <span>Download PDF</span>
+              </button>
+              <button mat-menu-item (click)="resendConfirmation(booking)">
+                <mat-icon>email</mat-icon>
+                <span>Resend Email</span>
+              </button>
+              <mat-divider></mat-divider>
+              <button mat-menu-item
+                      (click)="cancelBooking(booking)"
+                      *ngIf="booking.status === 'PENDING' || booking.status === 'CONFIRMED'"
+                      class="warn-action">
+                <mat-icon color="warn">cancel</mat-icon>
+                <span>Cancel Booking</span>
+              </button>
+            </mat-menu>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+            (click)="viewBooking(row)"
+            class="booking-row"></tr>
+
+        <!-- No Data Row -->
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell no-data" [attr.colspan]="displayedColumns.length">
+            <div class="empty-state">
+              <mat-icon>event_busy</mat-icon>
+              <h3>No Bookings Found</h3>
+              <p>There are no bookings matching your criteria.</p>
+              <button mat-raised-button color="primary" (click)="createBooking()">
+                Create New Booking
+              </button>
+            </div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Paginator -->
+      <mat-paginator
+        [pageSizeOptions]="[10, 25, 50, 100]"
+        [pageSize]="25"
+        showFirstLastButtons>
+      </mat-paginator>
+    </div>
+  </mat-card>
+</div>

@@ -1,0 +1,87 @@
+spring:
+  application:
+    name: feedback-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/feedback_db
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    open-in-view: false
+
+server:
+  port: 9085
+
+# Service URLs
+travel-service:
+  url: http://localhost:9083
+user-service:
+  url: http://localhost:9081
+
+# JWT Configuration (must match all services)
+jwt:
+  secret: ${JWT_SECRET:mySecretKeyForJWTTokenGeneration2024}
+  expiration: ${JWT_EXPIRATION:86400000}  # 24 hours in milliseconds
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    fetch-registry: true
+    register-with-eureka: true
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
+
+logging:
+  level:
+    com.travelms.feedback: DEBUG
+    org.springframework.web: INFO
+    org.hibernate: INFO
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+
+# Kafka Configuration
+kafka:
+  bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  producer:
+    key-serializer: org.apache.kafka.common.serialization.StringSerializer
+    value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    acks: all
+    retries: 3
+  consumer:
+    group-id: feedback-service-group
+    key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+    properties:
+      spring.json.trusted.packages: "*"
+    auto-offset-reset: earliest
+  topics:
+    user-deleted: user-deleted-events
+    feedback-changed: feedback-changed-events

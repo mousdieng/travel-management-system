@@ -1,0 +1,204 @@
+/* Registration component specific styles */
+
+/* Keyframe Animations */
+@keyframes fade-in-down {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 0.1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.15;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes pulse-slower {
+  0%, 100% {
+    opacity: 0.1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.12;
+    transform: scale(1.03);
+  }
+}
+
+/* Animation Classes */
+.animate-fade-in-down {
+  animation: fade-in-down 0.6s ease-out;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out 0.2s backwards;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 8s ease-in-out infinite;
+}
+
+.animate-pulse-slower {
+  animation: pulse-slower 10s ease-in-out infinite;
+}
+
+/* Ensure input text is always visible */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="file"] {
+  color: #111827 !important; /* gray-900 */
+  background-color: #ffffff !important; /* white */
+}
+
+input[type="text"]::placeholder,
+input[type="email"]::placeholder,
+input[type="password"]::placeholder {
+  color: #9ca3af !important; /* gray-400 */
+  transition: color 0.2s ease-in-out;
+}
+
+/* Enhanced input field styling */
+.input-field {
+  transition: all 0.3s ease-in-out;
+}
+
+.input-field:hover {
+  border-color: #d1d5db; /* gray-300 */
+}
+
+/* Form field focus enhancements with Netflix red ring */
+.input-field:focus {
+  outline: none;
+  border-color: var(--primary-600, #3b82f6);
+  box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.1), 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Error state styling */
+.input-field.border-red-500 {
+  border-color: #ef4444;
+  background-color: #fef2f2;
+}
+
+.input-field.border-red-500:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Password strength indicator custom animations */
+.password-strength-bar {
+  transition: width 0.3s ease-in-out, background-color 0.3s ease-in-out;
+}
+
+/* Smooth transitions for interactive elements */
+input, button, a, label {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Enhanced checkbox styling */
+input[type="checkbox"]:checked {
+  background-color: var(--primary-600, #3b82f6);
+  border-color: var(--primary-600, #3b82f6);
+}
+
+/* Button hover effects */
+.btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* Profile picture preview animations */
+.profile-picture-preview {
+  transition: transform 0.3s ease-in-out;
+}
+
+.profile-picture-preview:hover {
+  transform: scale(1.05);
+}
+
+/* Loading button animation */
+.btn[disabled] {
+  cursor: not-allowed;
+}
+
+/* Link hover effects */
+a {
+  position: relative;
+}
+
+a::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: currentColor;
+  transition: width 0.3s ease-in-out;
+}
+
+a:hover::after {
+  width: 100%;
+}
+
+/* Glassmorphism backdrop effect */
+.backdrop-blur-xl {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Enhanced error and success messages */
+.bg-red-50, .bg-green-50 {
+  animation: fade-in-up 0.3s ease-out;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .animate-fade-in-down,
+  .animate-fade-in-up {
+    animation-duration: 0.4s;
+  }
+}
+
+@media (max-width: 480px) {
+  .grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+}

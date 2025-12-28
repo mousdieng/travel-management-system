@@ -1,0 +1,161 @@
+.user-form-container {
+  max-width: 800px;
+  width: 100%;
+
+  .mat-dialog-title {
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: #333;
+  }
+}
+
+.user-form {
+  .form-section {
+    margin-bottom: 2rem;
+
+    h3 {
+      font-size: 1.2rem;
+      font-weight: 500;
+      margin-bottom: 1rem;
+      color: #666;
+      border-bottom: 1px solid #e0e0e0;
+      padding-bottom: 0.5rem;
+    }
+  }
+
+  .form-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    align-items: flex-start;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+  }
+
+  .mat-form-field {
+    &.half-width {
+      flex: 1;
+      min-width: 0;
+
+      @media (max-width: 768px) {
+        width: 100%;
+      }
+    }
+
+    &.full-width {
+      width: 100%;
+    }
+  }
+
+  .mat-checkbox {
+    margin-right: 1rem;
+    margin-bottom: 0.5rem;
+
+    &:last-child {
+      margin-right: 0;
+    }
+
+    @media (max-width: 768px) {
+      margin-right: 0;
+      margin-bottom: 1rem;
+      display: block;
+    }
+  }
+}
+
+.mat-dialog-content {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 1rem 1.5rem;
+}
+
+.mat-dialog-actions {
+  padding: 1rem 1.5rem;
+  gap: 0.5rem;
+
+  .mat-button {
+    min-width: 80px;
+  }
+
+  .mat-raised-button {
+    min-width: 100px;
+  }
+}
+
+// Form field customization
+.mat-form-field {
+  .mat-form-field-label {
+    color: #666;
+  }
+
+  &.mat-focused .mat-form-field-label {
+    color: #3f51b5;
+  }
+
+  .mat-form-field-underline {
+    background-color: #e0e0e0;
+  }
+
+  &.mat-focused .mat-form-field-underline .mat-form-field-ripple {
+    background-color: #3f51b5;
+  }
+}
+
+// Error styling
+.mat-error {
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+// Loading state
+.mat-raised-button[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+// Responsive design
+@media (max-width: 600px) {
+  .user-form-container {
+    max-width: 100%;
+    margin: 0;
+  }
+
+  .mat-dialog-content {
+    padding: 0.5rem;
+  }
+
+  .mat-dialog-actions {
+    padding: 0.5rem;
+    flex-direction: column;
+
+    .mat-button,
+    .mat-raised-button {
+      width: 100%;
+      margin: 0.25rem 0;
+    }
+  }
+}
+
+// Dark theme support
+.dark-theme {
+  .user-form-container .mat-dialog-title {
+    color: #fff;
+  }
+
+  .form-section h3 {
+    color: #ccc;
+    border-bottom-color: #404040;
+  }
+
+  .mat-form-field .mat-form-field-label {
+    color: #ccc;
+  }
+
+  .mat-form-field .mat-form-field-underline {
+    background-color: #404040;
+  }
+}

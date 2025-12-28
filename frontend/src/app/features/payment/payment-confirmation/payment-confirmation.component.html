@@ -1,0 +1,158 @@
+<div class="confirmation-container">
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Loading payment details...</p>
+  </div>
+
+  <!-- Confirmation Content -->
+  <div *ngIf="!isLoading" class="confirmation-content">
+    <!-- Status Card -->
+    <mat-card class="status-card" [class.success]="isPaymentSuccessful()" [class.failed]="!isPaymentSuccessful()">
+      <div class="status-icon" [style.color]="getStatusColor()">
+        <mat-icon>{{ getStatusIcon() }}</mat-icon>
+      </div>
+      <h1 class="status-title">{{ getStatusTitle() }}</h1>
+      <p class="status-message">{{ getStatusMessage() }}</p>
+
+      <!-- Transaction ID -->
+      <div class="transaction-id" *ngIf="paymentId">
+        <span>Transaction ID:</span>
+        <strong>{{ paymentId }}</strong>
+      </div>
+    </mat-card>
+
+    <!-- Payment Details Card -->
+    <mat-card class="details-card" *ngIf="payment">
+      <mat-card-header>
+        <mat-card-title>Payment Details</mat-card-title>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="details-grid">
+          <div class="detail-item">
+            <mat-icon>event</mat-icon>
+            <div class="detail-content">
+              <span class="detail-label">Date & Time</span>
+              <strong class="detail-value">{{ formatDate(payment.createdAt) }}</strong>
+            </div>
+          </div>
+
+          <div class="detail-item">
+            <mat-icon>attach_money</mat-icon>
+            <div class="detail-content">
+              <span class="detail-label">Amount Paid</span>
+              <strong class="detail-value amount">{{ formatCurrency(payment.amount, payment.currency) }}</strong>
+            </div>
+          </div>
+
+          <div class="detail-item">
+            <mat-icon>payment</mat-icon>
+            <div class="detail-content">
+              <span class="detail-label">Payment Method</span>
+              <strong class="detail-value">{{ getPaymentMethodDisplay() }}</strong>
+            </div>
+          </div>
+
+          <div class="detail-item">
+            <mat-icon>confirmation_number</mat-icon>
+            <div class="detail-content">
+              <span class="detail-label">Status</span>
+              <mat-chip [class.success-chip]="isPaymentSuccessful()" [class.failed-chip]="!isPaymentSuccessful()">
+                {{ payment.status }}
+              </mat-chip>
+            </div>
+          </div>
+
+          <div class="detail-item" *ngIf="payment.description">
+            <mat-icon>description</mat-icon>
+            <div class="detail-content">
+              <span class="detail-label">Description</span>
+              <strong class="detail-value">{{ payment.description }}</strong>
+            </div>
+          </div>
+
+          <div class="detail-item" *ngIf="bookingId || payment.metadata?.['bookingId']">
+            <mat-icon>book</mat-icon>
+            <div class="detail-content">
+              <span class="detail-label">Booking Reference</span>
+              <strong class="detail-value">{{ bookingId || payment.metadata?.['bookingId'] }}</strong>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Actions Card -->
+    <mat-card class="actions-card">
+      <mat-card-header>
+        <mat-card-title>What's Next?</mat-card-title>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="action-buttons">
+          <!-- Receipt Actions -->
+          <div class="action-group">
+            <h3>Receipt Options</h3>
+            <button mat-raised-button color="primary" (click)="viewReceipt()" [disabled]="!paymentId">
+              <mat-icon>receipt</mat-icon>
+              View Receipt
+            </button>
+            <button mat-stroked-button (click)="downloadReceipt()" [disabled]="!paymentId || isDownloading">
+              <mat-icon>{{ isDownloading ? 'hourglass_empty' : 'download' }}</mat-icon>
+              {{ isDownloading ? 'Downloading...' : 'Download Receipt' }}
+            </button>
+            <button mat-stroked-button (click)="emailReceipt()" [disabled]="!paymentId || isEmailing">
+              <mat-icon>{{ isEmailing ? 'hourglass_empty' : 'email' }}</mat-icon>
+              {{ isEmailing ? 'Sending...' : 'Email Receipt' }}
+            </button>
+            <button mat-stroked-button (click)="printPage()">
+              <mat-icon>print</mat-icon>
+              Print Page
+            </button>
+          </div>
+
+          <mat-divider></mat-divider>
+
+          <!-- Navigation Actions -->
+          <div class="action-group">
+            <h3>Continue</h3>
+            <button mat-raised-button color="accent" (click)="viewBooking()" *ngIf="bookingId || payment?.metadata?.['bookingId']">
+              <mat-icon>book</mat-icon>
+              View Booking
+            </button>
+            <button mat-stroked-button (click)="goToBookings()">
+              <mat-icon>list</mat-icon>
+              My Bookings
+            </button>
+            <button mat-stroked-button (click)="goToDashboard()">
+              <mat-icon>dashboard</mat-icon>
+              Dashboard
+            </button>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Help Card -->
+    <mat-card class="help-card">
+      <mat-card-content>
+        <mat-icon>help_outline</mat-icon>
+        <div class="help-content">
+          <h3>Need Assistance?</h3>
+          <p>If you have any questions or concerns about your payment, our support team is here to help.</p>
+          <button mat-raised-button color="primary">
+            <mat-icon>support_agent</mat-icon>
+            Contact Support
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Email Notification Notice -->
+    <div class="email-notice" *ngIf="isPaymentSuccessful()">
+      <mat-icon>email</mat-icon>
+      <p>A confirmation email has been sent to your registered email address.</p>
+    </div>
+  </div>
+</div>

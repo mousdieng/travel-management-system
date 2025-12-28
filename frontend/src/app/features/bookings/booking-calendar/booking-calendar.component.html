@@ -1,0 +1,157 @@
+<div class="calendar-container">
+  <!-- Header -->
+  <div class="calendar-header">
+    <div class="header-content">
+      <h1>Booking Calendar</h1>
+      <p class="subtitle">View all bookings in calendar format</p>
+    </div>
+    <button mat-raised-button color="primary" (click)="createBooking()">
+      <mat-icon>add</mat-icon>
+      New Booking
+    </button>
+  </div>
+
+  <!-- Calendar Controls -->
+  <mat-card class="calendar-controls">
+    <div class="controls-content">
+      <button mat-icon-button (click)="previousMonth()">
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+
+      <h2 class="current-month">{{ getCurrentMonthYear() }}</h2>
+
+      <button mat-icon-button (click)="nextMonth()">
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+
+      <button mat-stroked-button (click)="goToToday()" class="today-button">
+        <mat-icon>today</mat-icon>
+        Today
+      </button>
+    </div>
+  </mat-card>
+
+  <!-- Loading State -->
+  <div class="loading-overlay" *ngIf="isLoading">
+    <mat-spinner diameter="50"></mat-spinner>
+  </div>
+
+  <!-- Calendar Grid -->
+  <div class="calendar-content" *ngIf="!isLoading">
+    <mat-card class="calendar-grid-card">
+      <!-- Calendar Grid -->
+      <div class="calendar-grid">
+        <!-- Week Days Header -->
+        <div class="calendar-header-row">
+          <div class="calendar-day-header" *ngFor="let day of weekDays">
+            {{ day }}
+          </div>
+        </div>
+
+        <!-- Calendar Weeks -->
+        <div class="calendar-week" *ngFor="let week of calendarWeeks">
+          <div
+            class="calendar-day"
+            *ngFor="let date of week"
+            [class.today]="isToday(date)"
+            [class.selected]="isSelectedDate(date)"
+            [class.other-month]="!isCurrentMonth(date)"
+            (click)="selectDate(date)">
+
+            <div class="day-number">
+              {{ date.getDate() }}
+            </div>
+
+            <div class="day-bookings" *ngIf="getBookingsCountForDate(date) > 0">
+              <mat-chip class="bookings-count">
+                {{ getBookingsCountForDate(date) }}
+                <span class="count-label">{{ getBookingsCountForDate(date) === 1 ? 'booking' : 'bookings' }}</span>
+              </mat-chip>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-card>
+
+    <!-- Selected Date Details -->
+    <mat-card class="selected-date-card" *ngIf="selectedDate">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>event</mat-icon>
+          {{ selectedDate | date:'fullDate' }}
+        </mat-card-title>
+      </mat-card-header>
+
+      <mat-card-content>
+        <!-- No Bookings -->
+        <div class="no-bookings" *ngIf="selectedDateBookings.length === 0">
+          <mat-icon>event_busy</mat-icon>
+          <p>No bookings on this date</p>
+        </div>
+
+        <!-- Bookings List -->
+        <div class="bookings-list" *ngIf="selectedDateBookings.length > 0">
+          <div class="booking-item" *ngFor="let booking of selectedDateBookings" (click)="viewBooking(booking)">
+            <div class="booking-header">
+              <span class="booking-reference">{{ booking.bookingReference }}</span>
+              <mat-chip [style.background-color]="booking.status === 'CONFIRMED' ? '#4caf50' : '#ff9800'" class="status-chip">
+                {{ booking.status }}
+              </mat-chip>
+            </div>
+
+            <div class="booking-details">
+              <div class="detail-row">
+                <mat-icon>flight_takeoff</mat-icon>
+                <span>{{ booking.travel?.title }}</span>
+              </div>
+
+              <div class="detail-row">
+                <mat-icon>location_on</mat-icon>
+                <span>{{ booking.travel?.destination?.name }}</span>
+              </div>
+
+              <div class="detail-row">
+                <mat-icon>person</mat-icon>
+                <span>{{ booking.user?.firstName }} {{ booking.user?.lastName }}</span>
+              </div>
+
+              <div class="detail-row">
+                <mat-icon>people</mat-icon>
+                <span>{{ booking.numberOfPassengers }} passenger(s)</span>
+              </div>
+
+              <div class="detail-row">
+                <mat-icon>attach_money</mat-icon>
+                <span class="amount">{{ formatCurrency(booking.pricing.totalAmount, booking.pricing.currency) }}</span>
+              </div>
+            </div>
+
+            <button mat-stroked-button color="primary" class="view-button" (click)="viewBooking(booking); $event.stopPropagation()">
+              <mat-icon>visibility</mat-icon>
+              View Details
+            </button>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Legend -->
+  <mat-card class="calendar-legend">
+    <h4>Legend</h4>
+    <div class="legend-items">
+      <div class="legend-item">
+        <div class="legend-color today-color"></div>
+        <span>Today</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color selected-color"></div>
+        <span>Selected Date</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color has-bookings-color"></div>
+        <span>Has Bookings</span>
+      </div>
+    </div>
+  </mat-card>
+</div>

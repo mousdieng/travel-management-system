@@ -1,0 +1,441 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-8">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900">Feedback Management</h1>
+      <p class="text-gray-600 mt-2">Monitor and analyze platform reviews</p>
+    </div>
+    <div class="text-right">
+      <p class="text-sm text-gray-600">Average Platform Rating</p>
+      <div class="flex items-center space-x-2">
+        <span class="text-2xl font-bold text-yellow-500">{{ getAverageRating() | number:'1.1-1' }}</span>
+        <div class="flex">
+          @for (star of [1,2,3,4,5]; track star) {
+            <svg class="w-5 h-5" [class.text-yellow-400]="star <= Math.round(getAverageRating())" [class.text-gray-300]="star > Math.round(getAverageRating())" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+            </svg>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Tab Navigation -->
+  <div class="mb-6 border-b border-gray-200">
+    <nav class="flex space-x-8">
+      <button
+        (click)="setActiveTab('all')"
+        [class]="getMainTabClasses('all')"
+      >
+        All Feedbacks
+      </button>
+      <button
+        (click)="setActiveTab('byTravel')"
+        [class]="getMainTabClasses('byTravel')"
+      >
+        By Travel
+      </button>
+      <button
+        (click)="setActiveTab('byManager')"
+        [class]="getMainTabClasses('byManager')"
+      >
+        By Manager
+      </button>
+      <button
+        (click)="setActiveTab('analytics')"
+        [class]="getMainTabClasses('analytics')"
+      >
+        Analytics
+      </button>
+    </nav>
+  </div>
+
+  <!-- All Feedbacks Tab -->
+  @if (activeTab() === 'all') {
+    <div>
+      <!-- Rating Filter Tabs -->
+      <div class="mb-6 flex space-x-2 border-b border-gray-200">
+        <button
+          (click)="filterRating.set(0)"
+          [class]="getRatingTabClasses(0)"
+        >
+          All
+          <span class="ml-2 px-2 py-1 bg-gray-200 text-gray-700 text-xs rounded-full">{{ allFeedbacks().length }}</span>
+        </button>
+        @for (rating of [5,4,3,2,1]; track rating) {
+          <button
+            (click)="filterRating.set(rating)"
+            [class]="getRatingTabClasses(rating)"
+          >
+            {{ rating }}★
+            <span class="ml-2 px-2 py-1 bg-gray-200 text-gray-700 text-xs rounded-full">{{ getRatingCount(rating) }}</span>
+          </button>
+        }
+      </div>
+
+      <!-- Search -->
+      <div class="bg-white rounded-lg shadow p-4 mb-6">
+        <div class="relative">
+          <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <input
+            type="text"
+            [(ngModel)]="searchQuery"
+            placeholder="Search by traveler, travel, or comment..."
+            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          >
+        </div>
+      </div>
+
+      <app-loading *ngIf="allFeedbacksLoading()"></app-loading>
+
+      @if (!allFeedbacksLoading()) {
+        @if (filteredFeedbacks().length > 0) {
+          <div class="space-y-4">
+            @for (feedback of filteredFeedbacks(); track feedback.id) {
+              <div class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+                <div class="flex items-start justify-between">
+                  <div class="flex-1">
+                    <div class="flex items-center space-x-4 mb-3">
+                      <div class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center">
+                        <span class="text-indigo-600 font-semibold text-lg">{{ feedback.travelerName?.charAt(0) || 'U' }}</span>
+                      </div>
+                      <div class="flex-1">
+                        <div class="flex items-center space-x-3">
+                          <span class="font-semibold text-gray-900">{{ feedback.travelerName }}</span>
+                          <div class="flex items-center">
+                            @for (star of [1,2,3,4,5]; track star) {
+                              <svg class="w-5 h-5" [class.text-yellow-400]="star <= feedback.rating" [class.text-gray-300]="star > feedback.rating" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                              </svg>
+                            }
+                            <span class="ml-2 text-sm font-semibold text-gray-700">{{ feedback.rating }}/5</span>
+                          </div>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-1">{{ feedback.travelTitle }}</p>
+                      </div>
+                    </div>
+
+                    @if (feedback.comment) {
+                      <div class="bg-gray-50 rounded-lg p-4 mb-3">
+                        <p class="text-gray-900">{{ feedback.comment }}</p>
+                      </div>
+                    }
+
+                    <p class="text-xs text-gray-500">{{ formatDate(feedback.createdAt) }}</p>
+                  </div>
+
+                  <div class="ml-4">
+                    <a
+                      [routerLink]="['/travels', feedback.travelId]"
+                      class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    >
+                      View Travel
+                    </a>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="bg-white rounded-lg shadow text-center py-12">
+            <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+            </svg>
+            <p class="text-gray-600 text-lg">No feedbacks found</p>
+          </div>
+        }
+      }
+    </div>
+  }
+
+  <!-- By Travel Tab -->
+  @if (activeTab() === 'byTravel') {
+    <div>
+      <app-loading *ngIf="travelGroupsLoading()"></app-loading>
+
+      @if (!travelGroupsLoading()) {
+        @if (travelGroups().length > 0) {
+          <div class="space-y-4">
+            @for (group of travelGroups(); track group.travelId) {
+              <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div
+                  class="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+                  (click)="toggleTravelExpand(group.travelId)"
+                >
+                  <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                      <h3 class="text-lg font-semibold text-gray-900">{{ group.travelTitle }}</h3>
+                      <p class="text-sm text-gray-600 mt-1">{{ group.destination }} • {{ group.category }}</p>
+                      <p class="text-sm text-gray-500 mt-1">Manager: {{ group.managerName }}</p>
+
+                      <div class="flex items-center space-x-6 mt-3">
+                        <div class="flex items-center">
+                          @for (star of getStarArray(group.averageRating); track star) {
+                            <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                          }
+                          <span class="ml-2 text-sm font-semibold text-gray-700">{{ group.averageRating | number:'1.1-1' }} ({{ group.totalFeedbacks }} reviews)</span>
+                        </div>
+                      </div>
+
+                      <!-- Rating Distribution -->
+                      <div class="mt-4 space-y-2">
+                        @for (rating of [5,4,3,2,1]; track rating) {
+                          <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-600 w-8">{{ rating }}★</span>
+                            <div class="flex-1 bg-gray-200 rounded-full h-2">
+                              <div
+                                class="bg-yellow-400 h-2 rounded-full"
+                                [style.width.%]="getRatingPercentage(group.ratingDistribution[rating] || 0, group.totalFeedbacks)"
+                              ></div>
+                            </div>
+                            <span class="text-sm text-gray-600 w-12">{{ group.ratingDistribution[rating] || 0 }}</span>
+                          </div>
+                        }
+                      </div>
+                    </div>
+
+                    <svg
+                      class="w-6 h-6 text-gray-400 transition-transform"
+                      [class.rotate-180]="expandedTravelId() === group.travelId"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+
+                @if (expandedTravelId() === group.travelId) {
+                  <div class="border-t border-gray-200 bg-gray-50 p-6">
+                    <h4 class="font-semibold text-gray-900 mb-4">All Feedbacks</h4>
+                    <div class="space-y-3">
+                      @for (feedback of group.feedbacks; track feedback.id) {
+                        <div class="bg-white rounded-lg p-4">
+                          <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                              <div class="flex items-center space-x-2 mb-2">
+                                <span class="font-medium text-gray-900">{{ feedback.userName }}</span>
+                                <div class="flex">
+                                  @for (star of [1,2,3,4,5]; track star) {
+                                    <svg class="w-4 h-4" [class.text-yellow-400]="star <= feedback.rating" [class.text-gray-300]="star > feedback.rating" fill="currentColor" viewBox="0 0 20 20">
+                                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                    </svg>
+                                  }
+                                </div>
+                              </div>
+                              @if (feedback.comment) {
+                                <p class="text-gray-700 text-sm">{{ feedback.comment }}</p>
+                              }
+                              <p class="text-xs text-gray-500 mt-2">{{ formatDate(feedback.createdAt) }}</p>
+                            </div>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="bg-white rounded-lg shadow text-center py-12">
+            <p class="text-gray-600">No travel feedback groups found</p>
+          </div>
+        }
+      }
+    </div>
+  }
+
+  <!-- By Manager Tab -->
+  @if (activeTab() === 'byManager') {
+    <div>
+      <app-loading *ngIf="managerGroupsLoading()"></app-loading>
+
+      @if (!managerGroupsLoading()) {
+        @if (managerGroups().length > 0) {
+          <div class="space-y-4">
+            @for (group of managerGroups(); track group.managerId) {
+              <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div
+                  class="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+                  (click)="toggleManagerExpand(group.managerId)"
+                >
+                  <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                      <div class="flex items-center space-x-3">
+                        <div class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center">
+                          <span class="text-indigo-600 font-semibold text-lg">{{ group.managerName.charAt(0) }}</span>
+                        </div>
+                        <div>
+                          <h3 class="text-lg font-semibold text-gray-900">{{ group.managerName }}</h3>
+                          <p class="text-sm text-gray-600">{{ group.email }}</p>
+                        </div>
+                      </div>
+
+                      <div class="flex items-center space-x-6 mt-4">
+                        <div class="flex items-center">
+                          @for (star of getStarArray(group.averageRating); track star) {
+                            <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                          }
+                          <span class="ml-2 text-sm font-semibold text-gray-700">{{ group.averageRating | number:'1.1-1' }}</span>
+                        </div>
+                        <div>
+                          <span class="text-sm text-gray-600">{{ group.totalFeedbacks }} reviews • {{ group.travelCount }} travels</span>
+                        </div>
+                      </div>
+
+                      <!-- Rating Distribution -->
+                      <div class="mt-4 space-y-2">
+                        @for (rating of [5,4,3,2,1]; track rating) {
+                          <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-600 w-8">{{ rating }}★</span>
+                            <div class="flex-1 bg-gray-200 rounded-full h-2">
+                              <div
+                                class="bg-yellow-400 h-2 rounded-full"
+                                [style.width.%]="getRatingPercentage(group.ratingDistribution[rating] || 0, group.totalFeedbacks)"
+                              ></div>
+                            </div>
+                            <span class="text-sm text-gray-600 w-12">{{ group.ratingDistribution[rating] || 0 }}</span>
+                          </div>
+                        }
+                      </div>
+                    </div>
+
+                    <svg
+                      class="w-6 h-6 text-gray-400 transition-transform"
+                      [class.rotate-180]="expandedManagerId() === group.managerId"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+
+                @if (expandedManagerId() === group.managerId) {
+                  <div class="border-t border-gray-200 bg-gray-50 p-6">
+                    <h4 class="font-semibold text-gray-900 mb-4">Recent Feedbacks</h4>
+                    <div class="space-y-3">
+                      @for (feedback of group.feedbacks; track feedback.id) {
+                        <div class="bg-white rounded-lg p-4">
+                          <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                              <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center space-x-2">
+                                  <span class="font-medium text-gray-900">{{ feedback.userName }}</span>
+                                  <div class="flex">
+                                    @for (star of [1,2,3,4,5]; track star) {
+                                      <svg class="w-4 h-4" [class.text-yellow-400]="star <= feedback.rating" [class.text-gray-300]="star > feedback.rating" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                      </svg>
+                                    }
+                                  </div>
+                                </div>
+                                <a
+                                  [routerLink]="['/travels', feedback.travelId]"
+                                  class="text-sm text-indigo-600 hover:text-indigo-800"
+                                >
+                                  {{ feedback.travelTitle }}
+                                </a>
+                              </div>
+                              @if (feedback.comment) {
+                                <p class="text-gray-700 text-sm">{{ feedback.comment }}</p>
+                              }
+                              <p class="text-xs text-gray-500 mt-2">{{ formatDate(feedback.createdAt) }}</p>
+                            </div>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="bg-white rounded-lg shadow text-center py-12">
+            <p class="text-gray-600">No manager feedback groups found</p>
+          </div>
+        }
+      }
+    </div>
+  }
+
+  <!-- Analytics Tab -->
+  @if (activeTab() === 'analytics') {
+    <div>
+      <app-loading *ngIf="statsLoading()"></app-loading>
+
+      @if (!statsLoading() && stats()) {
+        <div class="space-y-6">
+          <!-- Statistics Cards -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="bg-white rounded-lg shadow p-6">
+              <p class="text-sm font-medium text-gray-600">Total Feedbacks</p>
+              <p class="text-3xl font-bold text-gray-900 mt-2">{{ stats()!.totalFeedbacks }}</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+              <p class="text-sm font-medium text-gray-600">Average Rating</p>
+              <p class="text-3xl font-bold text-yellow-500 mt-2">{{ stats()!.averageRating | number:'1.1-1' }}</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+              <p class="text-sm font-medium text-gray-600">This Month</p>
+              <p class="text-3xl font-bold text-gray-900 mt-2">{{ stats()!.feedbacksThisMonth }}</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+              <p class="text-sm font-medium text-gray-600">Growth Rate</p>
+              <p class="text-3xl font-bold mt-2" [class.text-green-600]="stats()!.growthRate >= 0" [class.text-red-600]="stats()!.growthRate < 0">
+                {{ stats()!.growthRate | number:'1.0-0' }}%
+              </p>
+            </div>
+          </div>
+
+          <!-- Charts -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <app-pie-chart [config]="ratingDistributionChart()" />
+            <app-bar-chart [config]="topRatedTravelsChart()" />
+          </div>
+
+          <!-- Top and Lowest Rated Travels -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white rounded-lg shadow p-6">
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">Top Rated Travels</h3>
+              <div class="space-y-3">
+                @for (travel of stats()!.topRatedTravels; track travel.travelId) {
+                  <div class="flex items-center justify-between">
+                    <a [routerLink]="['/travels', travel.travelId]" class="text-indigo-600 hover:text-indigo-800">
+                      {{ travel.travelTitle }}
+                    </a>
+                    <span class="text-yellow-500 font-semibold">{{ travel.rating | number:'1.1-1' }}★</span>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">Needs Improvement</h3>
+              <div class="space-y-3">
+                @for (travel of stats()!.lowestRatedTravels; track travel.travelId) {
+                  <div class="flex items-center justify-between">
+                    <a [routerLink]="['/travels', travel.travelId]" class="text-indigo-600 hover:text-indigo-800">
+                      {{ travel.travelTitle }}
+                    </a>
+                    <span class="text-red-500 font-semibold">{{ travel.rating | number:'1.1-1' }}★</span>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

@@ -1,0 +1,435 @@
+<div class="container mx-auto px-4 py-8 max-w-4xl">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900">
+      {{ isEditMode() ? 'Edit Travel' : 'Create New Travel' }}
+    </h1>
+    <p class="text-gray-600 mt-2">
+      {{ isEditMode() ? 'Update your travel offering details' : 'Fill in the details for your new travel offering' }}
+    </p>
+  </div>
+
+  @if (loading()) {
+    <div class="flex justify-center items-center h-64">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+    </div>
+  }
+
+  @if (error()) {
+    <div class="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+      <div class="flex items-center">
+        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+        </svg>
+        {{ error() }}
+      </div>
+    </div>
+  }
+
+  @if (!loading()) {
+    <form [formGroup]="travelForm" (ngSubmit)="onSubmit()" class="bg-white shadow-md rounded-lg p-6 space-y-6">
+
+      <!-- Basic Information -->
+      <div class="border-b border-gray-200 pb-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Basic Information</h2>
+
+        <!-- Title -->
+        <div class="mb-4">
+          <label for="title" class="block text-sm font-medium text-gray-700 mb-2">
+            Travel Title <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            id="title"
+            formControlName="title"
+            placeholder="e.g., Adventure in the Alps"
+            [class]="'w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ' +
+                     (isFieldInvalid('title') ? 'border-red-500' : 'border-gray-300')"
+          />
+          @if (isFieldInvalid('title')) {
+            <p class="mt-1 text-sm text-red-600">{{ getFieldError('title') }}</p>
+          }
+        </div>
+
+        <!-- Description -->
+        <div class="mb-4">
+          <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
+            Description <span class="text-red-500">*</span>
+          </label>
+          <textarea
+            id="description"
+            formControlName="description"
+            rows="4"
+            placeholder="Describe your travel offering in detail..."
+            [class]="'w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ' +
+                     (isFieldInvalid('description') ? 'border-red-500' : 'border-gray-300')"
+          ></textarea>
+          @if (isFieldInvalid('description')) {
+            <p class="mt-1 text-sm text-red-600">{{ getFieldError('description') }}</p>
+          }
+        </div>
+
+        <!-- Category -->
+        <div class="mb-4">
+          <label for="category" class="block text-sm font-medium text-gray-700 mb-2">
+            Category <span class="text-red-500">*</span>
+          </label>
+          <select
+            id="category"
+            formControlName="category"
+            [class]="'w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ' +
+                     (isFieldInvalid('category') ? 'border-red-500' : 'border-gray-300')"
+          >
+            <option value="">Select a category</option>
+            @for (cat of categories; track cat) {
+              <option [value]="cat">{{ cat }}</option>
+            }
+          </select>
+          @if (isFieldInvalid('category')) {
+            <p class="mt-1 text-sm text-red-600">{{ getFieldError('category') }}</p>
+          }
+        </div>
+      </div>
+
+      <!-- Location -->
+      <div class="border-b border-gray-200 pb-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Location</h2>
+
+        <div class="grid grid-cols-1 gap-4">
+          <!-- Destination -->
+          <div>
+            <label for="destination" class="block text-sm font-medium text-gray-700 mb-2">
+              Destination <span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+              <input
+                #destinationInput
+                type="text"
+                id="destination"
+                formControlName="destination"
+                placeholder="e.g., Paris, France"
+                autocomplete="off"
+                [class]="'w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ' +
+                         (isFieldInvalid('destination') ? 'border-red-500' : 'border-gray-300')"
+              />
+
+              <!-- Autocomplete Suggestions -->
+              @if (showSuggestions && suggestions.length > 0) {
+                <div class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  @for (suggestion of suggestions; track suggestion.display_name) {
+                    <div
+                      (click)="selectSuggestion(suggestion)"
+                      class="px-4 py-2 cursor-pointer hover:bg-indigo-50 border-b border-gray-100 last:border-b-0"
+                    >
+                      <div class="flex items-start">
+                        <span class="material-icons text-gray-400 mr-2 text-sm mt-0.5">location_on</span>
+                        <div>
+                          <div class="text-sm font-medium text-gray-900">{{ suggestion.display_name }}</div>
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+            @if (isFieldInvalid('destination')) {
+              <p class="mt-1 text-sm text-red-600">{{ getFieldError('destination') }}</p>
+            }
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Country -->
+            <div>
+              <label for="country" class="block text-sm font-medium text-gray-700 mb-2">
+                Country
+              </label>
+              <select
+                id="country"
+                formControlName="country"
+                (change)="onCountryChange($any($event.target).value)"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              >
+                <option value="">Select a country</option>
+                @for (country of countries; track country.isoCode) {
+                  <option [value]="country.isoCode">{{ country.flag }} {{ country.name }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- State -->
+            <div>
+              <label for="state" class="block text-sm font-medium text-gray-700 mb-2">
+                State / Province
+              </label>
+              <select
+                id="state"
+                formControlName="state"
+                (change)="onStateChange($any($event.target).value)"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                <option value="">{{ states.length === 0 ? 'Select country first' : 'Select state' }}</option>
+                @for (state of states; track state.isoCode) {
+                  <option [value]="state.isoCode">{{ state.name }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- City -->
+            <div>
+              <label for="city" class="block text-sm font-medium text-gray-700 mb-2">
+                City
+              </label>
+              <select
+                id="city"
+                formControlName="city"
+                (change)="onCityChange($any($event.target).value)"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                <option value="">{{ cities.length === 0 ? (states.length > 0 ? 'Select state first' : 'Select country first') : 'Select a city' }}</option>
+                @for (city of cities; track city.name) {
+                  <option [value]="city.name">{{ city.name }}</option>
+                }
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dates and Pricing -->
+      <div class="border-b border-gray-200 pb-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Dates & Pricing</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <!-- Start Date -->
+          <div>
+            <label for="startDate" class="block text-sm font-medium text-gray-700 mb-2">
+              Start Date <span class="text-red-500">*</span>
+            </label>
+            <input
+              #startDateInput
+              type="text"
+              id="startDate"
+              formControlName="startDate"
+              placeholder="Select start date"
+              [class]="'w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ' +
+                       (isFieldInvalid('startDate') ? 'border-red-500' : 'border-gray-300')"
+            />
+            @if (isFieldInvalid('startDate')) {
+              <p class="mt-1 text-sm text-red-600">{{ getFieldError('startDate') }}</p>
+            }
+          </div>
+
+          <!-- End Date -->
+          <div>
+            <label for="endDate" class="block text-sm font-medium text-gray-700 mb-2">
+              End Date <span class="text-red-500">*</span>
+            </label>
+            <input
+              #endDateInput
+              type="text"
+              id="endDate"
+              formControlName="endDate"
+              placeholder="Select end date"
+              [class]="'w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ' +
+                       (isFieldInvalid('endDate') ? 'border-red-500' : 'border-gray-300')"
+            />
+            @if (isFieldInvalid('endDate')) {
+              <p class="mt-1 text-sm text-red-600">{{ getFieldError('endDate') }}</p>
+            }
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Price -->
+          <div>
+            <label for="price" class="block text-sm font-medium text-gray-700 mb-2">
+              Price (USD) <span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+              <span class="absolute left-3 top-2 text-gray-500">$</span>
+              <input
+                type="number"
+                id="price"
+                formControlName="price"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                [class]="'w-full pl-8 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ' +
+                         (isFieldInvalid('price') ? 'border-red-500' : 'border-gray-300')"
+              />
+            </div>
+            @if (isFieldInvalid('price')) {
+              <p class="mt-1 text-sm text-red-600">{{ getFieldError('price') }}</p>
+            }
+          </div>
+
+          <!-- Max Participants -->
+          <div>
+            <label for="maxParticipants" class="block text-sm font-medium text-gray-700 mb-2">
+              Max Participants <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              id="maxParticipants"
+              formControlName="maxParticipants"
+              min="1"
+              placeholder="10"
+              [class]="'w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ' +
+                       (isFieldInvalid('maxParticipants') ? 'border-red-500' : 'border-gray-300')"
+            />
+            @if (isFieldInvalid('maxParticipants')) {
+              <p class="mt-1 text-sm text-red-600">{{ getFieldError('maxParticipants') }}</p>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Itinerary -->
+      <div class="border-b border-gray-200 pb-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Itinerary</h2>
+        <textarea
+          id="itinerary"
+          formControlName="itinerary"
+          rows="6"
+          placeholder="Describe the day-by-day itinerary (optional)..."
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+        ></textarea>
+      </div>
+
+      <!-- Images -->
+      <div class="border-b border-gray-200 pb-6">
+        <div class="flex justify-between items-center mb-4">
+          <div>
+            <h2 class="text-xl font-semibold text-gray-900">
+              Travel Images <span class="text-red-500">*</span>
+            </h2>
+            <p class="text-xs text-gray-500 mt-1">
+              @if (!isEditMode()) {
+                Cover image is required (first image will be used as cover)
+              } @else {
+                Add or remove images (first image is the cover)
+              }
+            </p>
+          </div>
+          <label class="bg-indigo-100 text-indigo-700 px-4 py-2 rounded-lg hover:bg-indigo-200 transition text-sm font-medium cursor-pointer">
+            <input
+              type="file"
+              accept="image/*"
+              (change)="onImageSelect($event)"
+              class="hidden"
+            />
+            + Add Image
+          </label>
+        </div>
+
+        @if (uploadedImages.length === 0) {
+          <div class="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <p class="mt-2 text-sm text-gray-600">No images uploaded yet</p>
+            <p class="text-xs text-gray-500 mt-1">Click "Add Image" to upload travel photos (max 5MB)</p>
+          </div>
+        } @else {
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+            @for (image of uploadedImages; track $index) {
+              <div class="relative group">
+                <img
+                  [src]="image.url"
+                  [alt]="'Travel image ' + ($index + 1)"
+                  class="w-full h-48 object-cover rounded-lg border border-gray-200"
+                />
+                <button
+                  type="button"
+                  (click)="removeImage($index)"
+                  class="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition opacity-0 group-hover:opacity-100"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
+                @if ($index === 0) {
+                  <div class="absolute bottom-2 left-2 bg-indigo-600 text-white text-xs px-2 py-1 rounded">
+                    Cover Image
+                  </div>
+                }
+              </div>
+            }
+          </div>
+          <p class="mt-2 text-xs text-gray-500">The first image will be used as the cover image</p>
+        }
+      </div>
+
+      <!-- Highlights -->
+      <div class="border-b border-gray-200 pb-6">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-semibold text-gray-900">Highlights</h2>
+          <button
+            type="button"
+            (click)="addHighlight()"
+            class="bg-indigo-100 text-indigo-700 px-4 py-2 rounded-lg hover:bg-indigo-200 transition text-sm font-medium"
+          >
+            + Add Highlight
+          </button>
+        </div>
+
+        @if (highlights.length === 0) {
+          <p class="text-gray-500 text-sm">No highlights added yet. Click "Add Highlight" to add key features of your travel.</p>
+        }
+
+        <div class="space-y-3" formArrayName="highlights">
+          @for (highlight of highlights.controls; track $index) {
+            <div class="flex gap-2">
+              <input
+                type="text"
+                [formControlName]="$index"
+                placeholder="e.g., Professional guide included"
+                [class]="'flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ' +
+                         (highlight.invalid && highlight.touched ? 'border-red-500' : 'border-gray-300')"
+              />
+              <button
+                type="button"
+                (click)="removeHighlight($index)"
+                class="px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="flex justify-end gap-4 pt-4">
+        <button
+          type="button"
+          (click)="cancel()"
+          [disabled]="submitting()"
+          class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          [disabled]="submitting() || travelForm.invalid"
+          class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+        >
+          @if (submitting()) {
+            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            @if (uploadingImages()) {
+              Uploading images...
+            } @else {
+              {{ isEditMode() ? 'Updating...' : 'Creating...' }}
+            }
+          } @else {
+            {{ isEditMode() ? 'Update Travel' : 'Create Travel' }}
+          }
+        </button>
+      </div>
+    </form>
+  }
+</div>

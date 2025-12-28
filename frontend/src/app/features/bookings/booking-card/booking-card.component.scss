@@ -1,0 +1,215 @@
+.booking-card {
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  }
+
+  // Status Badge
+  .status-badge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    z-index: 1;
+
+    mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+    }
+  }
+
+  // Header
+  mat-card-header {
+    padding: 16px 16px 8px;
+
+    .booking-header {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+
+      .booking-reference,
+      .booking-date {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: #757575;
+
+        mat-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+          color: #1976d2;
+        }
+
+        span {
+          font-weight: 500;
+        }
+      }
+
+      .booking-reference {
+        font-family: 'Courier New', monospace;
+        font-weight: 600;
+        color: #1976d2;
+      }
+    }
+  }
+
+  // Content
+  mat-card-content {
+    padding: 16px !important;
+
+    .travel-section {
+      margin-bottom: 16px;
+
+      .travel-title {
+        margin: 0 0 12px 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: #212121;
+      }
+
+      .travel-detail {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+        font-size: 13px;
+        color: #616161;
+
+        mat-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+          color: #757575;
+        }
+      }
+    }
+
+    mat-divider {
+      margin: 16px 0;
+    }
+
+    .details-section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+
+      .detail-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .label {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 13px;
+          color: #757575;
+          font-weight: 500;
+
+          mat-icon {
+            font-size: 16px;
+            width: 16px;
+            height: 16px;
+          }
+        }
+
+        .value {
+          font-size: 14px;
+          color: #212121;
+          font-weight: 500;
+
+          &.amount {
+            font-size: 16px;
+            font-weight: 700;
+            color: #4caf50;
+          }
+        }
+      }
+    }
+
+    .countdown {
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background: #fff3e0;
+      border-radius: 8px;
+      color: #e65100;
+      font-weight: 500;
+      font-size: 13px;
+
+      mat-icon {
+        color: #ff9800;
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
+  }
+
+  // Actions
+  mat-card-actions {
+    padding: 8px 16px 16px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+
+    button {
+      mat-icon {
+        margin-right: 4px;
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .booking-card {
+    .status-badge {
+      top: 12px;
+      right: 12px;
+      font-size: 10px;
+      padding: 4px 8px;
+
+      mat-icon {
+        font-size: 12px;
+        width: 12px;
+        height: 12px;
+      }
+    }
+
+    mat-card-content {
+      .travel-section {
+        .travel-title {
+          font-size: 16px;
+        }
+      }
+    }
+
+    mat-card-actions {
+      button {
+        flex: 1;
+        min-width: auto;
+      }
+    }
+  }
+}

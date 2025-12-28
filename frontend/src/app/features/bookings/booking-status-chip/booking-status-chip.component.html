@@ -1,0 +1,6 @@
+<mat-chip
+  [style.background-color]="getStatusColor()"
+  [class]="'status-chip ' + size">
+  <mat-icon>{{ getStatusIcon() }}</mat-icon>
+  {{ getStatusLabel() }}
+</mat-chip>

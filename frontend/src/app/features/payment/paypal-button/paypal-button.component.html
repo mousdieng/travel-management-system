@@ -1,0 +1,53 @@
+<div class="paypal-button-container">
+  <!-- Payment Amount Display -->
+  <div class="payment-amount" *ngIf="amount > 0">
+    <h3>Payment Amount</h3>
+    <div class="amount-display">
+      {{ formatAmount() }}
+    </div>
+  </div>
+
+  <!-- PayPal Info -->
+  <div class="paypal-info">
+    <mat-icon>info</mat-icon>
+    <div class="info-content">
+      <strong>Pay securely with PayPal</strong>
+      <p>You'll be redirected to PayPal to complete your payment securely.
+         You can pay with your PayPal balance, bank account, or credit/debit card.</p>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="!paypalLoaded">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Loading PayPal...</p>
+  </div>
+
+  <!-- PayPal Button Container -->
+  <div id="paypal-button-container" *ngIf="paypalLoaded && !isLoading" class="paypal-buttons">
+    <!-- PayPal buttons will be rendered here -->
+  </div>
+
+  <!-- Processing State -->
+  <div class="processing-state" *ngIf="isLoading">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Processing payment...</p>
+  </div>
+
+  <!-- Security Notice -->
+  <div class="security-notice">
+    <mat-icon>verified_user</mat-icon>
+    <div class="notice-content">
+      <strong>Your payment is secure</strong>
+      <p>PayPal protects your financial information with industry-leading security
+         and fraud prevention tools.</p>
+    </div>
+  </div>
+
+  <!-- Powered by PayPal Badge -->
+  <div class="powered-by">
+    <span>Secured by</span>
+    <img src="assets/images/paypal-logo.svg" alt="PayPal" onerror="this.style.display='none'">
+    <span *ngIf="!paypalLoaded">PayPal</span>
+  </div>
+</div>

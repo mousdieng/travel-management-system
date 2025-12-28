@@ -1,0 +1,168 @@
+/* Login component specific styles */
+
+/* Keyframe Animations */
+@keyframes fade-in-down {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 0.1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.15;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes pulse-slower {
+  0%, 100% {
+    opacity: 0.1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.12;
+    transform: scale(1.03);
+  }
+}
+
+/* Animation Classes */
+.animate-fade-in-down {
+  animation: fade-in-down 0.6s ease-out;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out 0.2s backwards;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 8s ease-in-out infinite;
+}
+
+.animate-pulse-slower {
+  animation: pulse-slower 10s ease-in-out infinite;
+}
+
+/* Ensure input text is always visible */
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  color: #111827 !important; /* gray-900 */
+  background-color: #ffffff !important; /* white */
+}
+
+input[type="text"]::placeholder,
+input[type="email"]::placeholder,
+input[type="password"]::placeholder {
+  color: #9ca3af !important; /* gray-400 */
+  transition: color 0.2s ease-in-out;
+}
+
+/* Enhanced input field styling */
+.input-field {
+  transition: all 0.3s ease-in-out;
+}
+
+.input-field:hover {
+  border-color: #d1d5db; /* gray-300 */
+}
+
+/* Form field focus enhancements */
+.input-field:focus {
+  outline: none;
+}
+
+/* Error state styling */
+.input-field.border-red-500 {
+  border-color: #ef4444;
+  background-color: #fef2f2;
+}
+
+.input-field.border-red-500:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Smooth transitions for interactive elements */
+input, button, a {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Button hover effects */
+.btn-primary,
+.btn-secondary {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::before,
+.btn-secondary::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn-primary:hover::before,
+.btn-secondary:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* Link hover effects */
+a {
+  position: relative;
+}
+
+a::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: currentColor;
+  transition: width 0.3s ease-in-out;
+}
+
+a:hover::after {
+  width: 100%;
+}
+
+/* Glassmorphism backdrop effect */
+.backdrop-blur-xl {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Responsive enhancements */
+@media (max-width: 640px) {
+  .animate-fade-in-down,
+  .animate-fade-in-up {
+    animation-duration: 0.4s;
+  }
+}

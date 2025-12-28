@@ -1,0 +1,138 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="mb-8">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">My Travels</h1>
+        <p class="text-gray-600 mt-2">Manage all your travel offerings</p>
+      </div>
+      <a routerLink="/manager/travels/create" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition">
+        + Create New Travel
+      </a>
+    </div>
+  </div>
+
+  <!-- Filter Tabs -->
+  <div class="mb-6 border-b border-gray-200">
+    <nav class="flex space-x-8">
+      <button
+        (click)="setFilter('all')"
+        [class]="selectedFilter() === 'all' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+        class="py-4 px-1 border-b-2 font-medium text-sm transition">
+        All Travels
+      </button>
+      <button
+        (click)="setFilter('active')"
+        [class]="selectedFilter() === 'active' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+        class="py-4 px-1 border-b-2 font-medium text-sm transition">
+        Active
+      </button>
+      <button
+        (click)="setFilter('upcoming')"
+        [class]="selectedFilter() === 'upcoming' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+        class="py-4 px-1 border-b-2 font-medium text-sm transition">
+        Upcoming
+      </button>
+      <button
+        (click)="setFilter('completed')"
+        [class]="selectedFilter() === 'completed' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+        class="py-4 px-1 border-b-2 font-medium text-sm transition">
+        Completed
+      </button>
+    </nav>
+  </div>
+
+  @if (loading()) {
+    <div class="flex justify-center items-center h-64">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+    </div>
+  }
+
+  @if (error()) {
+    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+      {{ error() }}
+    </div>
+  }
+
+  @if (!loading() && filteredTravels().length === 0) {
+    <div class="text-center py-12">
+      <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+      </svg>
+      <h3 class="mt-2 text-sm font-medium text-gray-900">No travels found</h3>
+      <p class="mt-1 text-sm text-gray-500">Get started by creating a new travel.</p>
+      <div class="mt-6">
+        <a routerLink="/manager/travels/create" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+          + New Travel
+        </a>
+      </div>
+    </div>
+  }
+
+  @if (!loading() && filteredTravels().length > 0) {
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      @for (travel of filteredTravels(); track travel.id) {
+        <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
+          <!-- Travel Image -->
+          <div class="h-48 bg-gradient-to-r from-indigo-500 to-purple-600 relative">
+            <div class="absolute top-4 right-4">
+              <span [class]="'px-3 py-1 rounded-full text-xs font-semibold ' + getStatusBadge(travel)">
+                {{ getStatusText(travel) }}
+              </span>
+            </div>
+            <div class="absolute bottom-4 left-4 text-white">
+              <h3 class="text-xl font-bold">{{ travel.title }}</h3>
+              <p class="text-sm opacity-90">{{ travel.destination }}</p>
+            </div>
+          </div>
+
+          <!-- Travel Info -->
+          <div class="p-6">
+            <div class="space-y-3">
+              <!-- Category & Price -->
+              <div class="flex justify-between items-center">
+                <span class="text-sm text-gray-600">{{ travel.category }}</span>
+                <span class="text-lg font-bold text-indigo-600">${{ travel.price }}</span>
+              </div>
+
+              <!-- Dates -->
+              <div class="flex items-center text-sm text-gray-600">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                {{ travel.startDate | date:'MMM d' }} - {{ travel.endDate | date:'MMM d, y' }}
+              </div>
+
+              <!-- Participants -->
+              <div class="flex items-center justify-between">
+                <div class="flex items-center text-sm text-gray-600">
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                  </svg>
+                  {{ travel.currentParticipants }} / {{ travel.maxParticipants }}
+                </div>
+                <span [class]="'text-sm font-medium ' + getOccupancyClass((travel.currentParticipants / travel.maxParticipants) * 100)">
+                  {{ ((travel.currentParticipants / travel.maxParticipants) * 100).toFixed(0) }}% filled
+                </span>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="mt-6 flex gap-2">
+              <a [routerLink]="['/manager/travels', travel.id]" class="flex-1 bg-indigo-600 text-white text-center py-2 rounded-lg hover:bg-indigo-700 transition text-sm font-medium">
+                View Details
+              </a>
+              <a [routerLink]="['/manager/travels', travel.id, 'edit']" class="flex-1 bg-gray-100 text-gray-700 text-center py-2 rounded-lg hover:bg-gray-200 transition text-sm font-medium">
+                Edit
+              </a>
+              <button (click)="deleteTravel(travel.id)" class="px-4 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

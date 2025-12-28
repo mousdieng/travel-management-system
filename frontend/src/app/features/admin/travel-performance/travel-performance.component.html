@@ -1,0 +1,267 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-8">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900">Travel Performance Analytics</h1>
+      <p class="text-gray-600 mt-2">Comprehensive performance metrics and insights</p>
+    </div>
+    <a
+      routerLink="/admin/dashboard"
+      class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition-colors"
+    >
+      Back to Dashboard
+    </a>
+  </div>
+
+  <!-- Filter Panel -->
+  <app-filter-panel
+    [config]="filterConfig"
+    (filterChange)="onFilterChange($event)"
+  />
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <app-stats-card
+      title="Avg Occupancy Rate"
+      [value]="formatPercentage(averageOccupancy())"
+      icon="users"
+      color="purple"
+      subtitle="Average across all travels"
+    />
+    <app-stats-card
+      title="Avg Revenue"
+      [value]="formatCurrency(averageRevenue())"
+      icon="currency"
+      color="green"
+      subtitle="Per travel package"
+    />
+    <app-stats-card
+      title="Avg Rating"
+      [value]="averageRating().toFixed(1)"
+      icon="star"
+      color="yellow"
+      subtitle="Customer satisfaction"
+    />
+    <app-stats-card
+      title="Total Revenue"
+      [value]="formatCurrency(totalRevenue())"
+      icon="chart"
+      color="blue"
+      subtitle="All travels combined"
+    />
+  </div>
+
+  <!-- Charts Section -->
+  <div class="mb-8">
+    <h2 class="text-2xl font-bold text-gray-900 mb-6">Performance Charts</h2>
+
+    <app-loading *ngIf="loading()"></app-loading>
+
+    @if (!loading()) {
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <app-bar-chart [config]="topRevenueChart()" />
+        <app-bar-chart [config]="topRatingChart()" />
+      </div>
+
+      <div class="mb-6">
+        <app-bar-chart [config]="occupancyChart()" />
+      </div>
+    }
+  </div>
+
+  <!-- Performance Table -->
+  <div class="mb-8">
+    <h2 class="text-2xl font-bold text-gray-900 mb-6">All Travels Performance</h2>
+
+    <app-loading *ngIf="loading()"></app-loading>
+
+    @if (!loading()) {
+      @if (performances().length > 0) {
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Travel
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Category
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Revenue
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Occupancy
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Rating
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Performance
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                @for (travel of performances(); track travel.travelId) {
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4">
+                      <div class="text-sm font-medium text-gray-900">{{ travel.title }}</div>
+                      <div class="text-sm text-gray-500">{{ travel.destination }}</div>
+                      <div class="text-xs text-gray-400">Manager: {{ travel.managerName }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                        {{ travel.category }}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span
+                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                        [ngClass]="getStatusBadgeClass(travel.status)"
+                      >
+                        {{ travel.status }}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="text-sm font-semibold text-gray-900">{{ formatCurrency(travel.revenue) }}</div>
+                      @if (travel.revenueGrowth !== 0) {
+                        <div class="text-xs" [class.text-green-600]="travel.revenueGrowth > 0" [class.text-red-600]="travel.revenueGrowth < 0">
+                          {{ travel.revenueGrowth > 0 ? '+' : '' }}{{ travel.revenueGrowth.toFixed(1) }}%
+                        </div>
+                      }
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="flex items-center">
+                        <div class="flex-1">
+                          <div class="text-sm font-medium text-gray-900">{{ formatPercentage(travel.occupancyRate) }}</div>
+                          <div class="text-xs text-gray-500">{{ travel.currentParticipants }}/{{ travel.maxParticipants }}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="flex items-center">
+                        @for (star of getStarArray(travel.averageRating); track star) {
+                          <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        }
+                        <span class="ml-1 text-sm text-gray-700">{{ travel.averageRating.toFixed(1) }}</span>
+                        <span class="ml-1 text-xs text-gray-500">({{ travel.reviewCount }})</span>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      @if (travel.performanceScore) {
+                        <span
+                          class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                          [ngClass]="getPerformanceScoreBadge(travel.performanceScore).class"
+                        >
+                          {{ getPerformanceScoreBadge(travel.performanceScore).label }}
+                        </span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      } @else {
+        <div class="bg-white rounded-lg shadow text-center py-12">
+          <p class="text-gray-600">No travel performance data available</p>
+        </div>
+      }
+    }
+  </div>
+
+  <!-- Underperforming Travels Alert -->
+  <div>
+    <h2 class="text-2xl font-bold text-gray-900 mb-6">Underperforming Travels</h2>
+
+    <app-loading *ngIf="underperformingLoading()"></app-loading>
+
+    @if (!underperformingLoading()) {
+      @if (underperforming().length > 0) {
+        <div class="space-y-4">
+          @for (travel of underperforming(); track travel.travelId) {
+            <div class="bg-red-50 border-l-4 border-red-400 rounded-lg p-6">
+              <div class="flex items-start">
+                <div class="flex-shrink-0">
+                  <svg class="h-6 w-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <div class="ml-3 flex-1">
+                  <h3 class="text-lg font-semibold text-red-800">{{ travel.title }}</h3>
+                  <p class="text-sm text-red-700 mt-1">{{ travel.destination }} • Manager: {{ travel.managerName }}</p>
+
+                  <div class="mt-4 grid grid-cols-3 gap-4">
+                    <div>
+                      <p class="text-xs text-red-600">Occupancy Rate</p>
+                      <p class="text-sm font-semibold text-red-900">{{ formatPercentage(travel.occupancyRate) }}</p>
+                    </div>
+                    <div>
+                      <p class="text-xs text-red-600">Average Rating</p>
+                      <p class="text-sm font-semibold text-red-900">{{ travel.averageRating.toFixed(1) }} / 5.0</p>
+                    </div>
+                    <div>
+                      <p class="text-xs text-red-600">Revenue</p>
+                      <p class="text-sm font-semibold text-red-900">{{ formatCurrency(travel.revenue) }}</p>
+                    </div>
+                  </div>
+
+                  <!-- Issues -->
+                  @if (travel.issues && travel.issues.length > 0) {
+                    <div class="mt-4">
+                      <p class="text-xs font-medium text-red-700 mb-2">Issues Identified:</p>
+                      <ul class="list-disc list-inside space-y-1">
+                        @for (issue of travel.issues; track issue) {
+                          <li class="text-sm text-red-600">{{ issue }}</li>
+                        }
+                      </ul>
+                    </div>
+                  }
+
+                  <!-- Recommendations -->
+                  @if (travel.recommendations && travel.recommendations.length > 0) {
+                    <div class="mt-4 bg-white rounded-lg p-4 border border-red-200">
+                      <p class="text-xs font-medium text-gray-700 mb-2">Recommendations:</p>
+                      <ul class="list-disc list-inside space-y-1">
+                        @for (recommendation of travel.recommendations; track recommendation) {
+                          <li class="text-sm text-gray-600">{{ recommendation }}</li>
+                        }
+                      </ul>
+                    </div>
+                  }
+
+                  <div class="mt-4">
+                    <a
+                      [routerLink]="['/admin/travels', travel.travelId]"
+                      class="text-sm font-medium text-red-600 hover:text-red-800"
+                    >
+                      View Details →
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="bg-green-50 border-l-4 border-green-400 rounded-lg p-6">
+          <div class="flex items-center">
+            <svg class="h-6 w-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p class="ml-3 text-sm font-medium text-green-800">
+              Great news! All travels are performing well. No underperforming travels detected.
+            </p>
+          </div>
+        </div>
+      }
+    }
+  </div>
+</div>

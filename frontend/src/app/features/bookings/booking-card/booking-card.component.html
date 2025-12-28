@@ -1,0 +1,107 @@
+<mat-card class="booking-card" (click)="onViewDetails()">
+  <!-- Status Badge -->
+  <div class="status-badge" [style.background-color]="getStatusColor()">
+    <mat-icon>{{ getStatusIcon() }}</mat-icon>
+    {{ booking.status }}
+  </div>
+
+  <!-- Booking Header -->
+  <mat-card-header>
+    <div class="booking-header">
+      <div class="booking-reference">
+        <mat-icon>confirmation_number</mat-icon>
+        <span>{{ booking.bookingReference }}</span>
+      </div>
+      <div class="booking-date">
+        <mat-icon>event</mat-icon>
+        <span>{{ booking.bookingDate | date:'shortDate' }}</span>
+      </div>
+    </div>
+  </mat-card-header>
+
+  <!-- Travel Information -->
+  <mat-card-content>
+    <div class="travel-section">
+      <h3 class="travel-title">{{ booking.travel?.title }}</h3>
+
+      <div class="travel-detail">
+        <mat-icon>location_on</mat-icon>
+        <span>{{ booking.travel?.destination?.name }}</span>
+      </div>
+
+      <div class="travel-detail">
+        <mat-icon>calendar_today</mat-icon>
+        <span>{{ booking.travelStartDate | date:'mediumDate' }} - {{ booking.travelEndDate | date:'mediumDate' }}</span>
+      </div>
+
+      <div class="travel-detail">
+        <mat-icon>schedule</mat-icon>
+        <span>{{ booking.travel?.duration }} days</span>
+      </div>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <!-- Customer & Passengers -->
+    <div class="details-section">
+      <div class="detail-row">
+        <span class="label">
+          <mat-icon>person</mat-icon>
+          Customer
+        </span>
+        <span class="value">{{ booking.user?.firstName }} {{ booking.user?.lastName }}</span>
+      </div>
+
+      <div class="detail-row">
+        <span class="label">
+          <mat-icon>people</mat-icon>
+          Passengers
+        </span>
+        <span class="value">{{ booking.numberOfPassengers }}</span>
+      </div>
+
+      <div class="detail-row">
+        <span class="label">
+          <mat-icon>attach_money</mat-icon>
+          Total Amount
+        </span>
+        <span class="value amount">{{ formatCurrency(booking.pricing.totalAmount, booking.pricing.currency) }}</span>
+      </div>
+    </div>
+
+    <!-- Countdown -->
+    <div class="countdown" *ngIf="getDaysUntilTravel() > 0 && booking.status !== BookingStatus.CANCELLED">
+      <mat-icon>hourglass_bottom</mat-icon>
+      <span>{{ getDaysUntilTravel() }} days until travel</span>
+    </div>
+  </mat-card-content>
+
+  <!-- Actions -->
+  <mat-card-actions *ngIf="showActions">
+    <button mat-button color="primary" (click)="onViewDetails(); $event.stopPropagation()">
+      <mat-icon>visibility</mat-icon>
+      View
+    </button>
+
+    <button mat-button color="primary"
+            (click)="onConfirm(); $event.stopPropagation()"
+            *ngIf="canConfirm()">
+      <mat-icon>check_circle</mat-icon>
+      Confirm
+    </button>
+
+    <button mat-button color="primary"
+            (click)="onProcessPayment(); $event.stopPropagation()"
+            *ngIf="canProcessPayment()">
+      <mat-icon>payment</mat-icon>
+      Payment
+    </button>
+
+    <button mat-button color="warn"
+            (click)="onCancel(); $event.stopPropagation()"
+            *ngIf="canCancel()">
+      <mat-icon>cancel</mat-icon>
+      Cancel
+    </button>
+  </mat-card-actions>
+</mat-card>

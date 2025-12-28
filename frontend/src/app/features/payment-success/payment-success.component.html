@@ -1,0 +1,167 @@
+<div class="success-container" *ngIf="!isLoading">
+  <!-- Success State -->
+  <div *ngIf="payment && payment.status === 'COMPLETED' && subscription" class="success-content">
+    <div class="success-icon">
+      <i class="material-icons">check_circle</i>
+    </div>
+
+    <h1>Booking Confirmed!</h1>
+    <p class="success-message">
+      Thank you for your payment. Your travel booking has been successfully confirmed.
+    </p>
+
+    <!-- Booking Details -->
+    <div class="details-card">
+      <h2>Booking Details</h2>
+
+      <div class="detail-row">
+        <span class="label">Booking Reference:</span>
+        <span class="value"><strong>{{ subscription.id }}</strong></span>
+      </div>
+
+      <div class="detail-row">
+        <span class="label">Travel:</span>
+        <span class="value">{{ subscription.travelTitle }}</span>
+      </div>
+
+      <div class="detail-row">
+        <span class="label">Number of Travelers:</span>
+        <span class="value">{{ subscription.numberOfParticipants }}</span>
+      </div>
+
+      <div class="detail-row">
+        <span class="label">Total Paid:</span>
+        <span class="value amount">{{ payment.amount | currency }}</span>
+      </div>
+
+      <div class="detail-row">
+        <span class="label">Payment Method:</span>
+        <span class="value">{{ payment.paymentMethod }}</span>
+      </div>
+
+      <div class="detail-row">
+        <span class="label">Transaction ID:</span>
+        <span class="value">{{ payment.transactionId }}</span>
+      </div>
+
+      <div class="detail-row">
+        <span class="label">Payment Date:</span>
+        <span class="value">{{ payment.paidAt | date:'medium' }}</span>
+      </div>
+    </div>
+
+    <!-- Next Steps -->
+    <div class="next-steps">
+      <h3>What's Next?</h3>
+      <ul>
+        <li>
+          <i class="material-icons">email</i>
+          <span>A confirmation email has been sent to your registered email address</span>
+        </li>
+        <li>
+          <i class="material-icons">description</i>
+          <span>You can view and manage your booking in your dashboard</span>
+        </li>
+        <li>
+          <i class="material-icons">help</i>
+          <span>If you have any questions, please contact our support team</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Actions -->
+    <div class="action-buttons">
+      <button class="btn btn-secondary" (click)="printConfirmation()">
+        <i class="material-icons">print</i>
+        Print Confirmation
+      </button>
+      <button class="btn btn-primary" [routerLink]="['/subscriptions']">
+        <i class="material-icons">dashboard</i>
+        View My Bookings
+      </button>
+    </div>
+  </div>
+
+  <!-- Pending State -->
+  <div *ngIf="payment && payment.status === 'COMPLETED' && !subscription" class="pending-content">
+    <div class="warning-icon">
+      <i class="material-icons">schedule</i>
+    </div>
+
+    <h1>Payment Completed</h1>
+    <p class="warning-message">
+      Your payment has been processed successfully, but your booking is being finalized.
+    </p>
+
+    <div class="details-card">
+      <h2>Payment Details</h2>
+
+      <div class="detail-row">
+        <span class="label">Payment ID:</span>
+        <span class="value">{{ payment.id }}</span>
+      </div>
+
+      <div class="detail-row">
+        <span class="label">Amount Paid:</span>
+        <span class="value amount">{{ payment.amount | currency }}</span>
+      </div>
+
+      <div class="detail-row">
+        <span class="label">Transaction ID:</span>
+        <span class="value">{{ payment.transactionId }}</span>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <p>
+        <i class="material-icons">info</i>
+        Please check your email for booking confirmation or contact support if you don't receive it within 15 minutes.
+      </p>
+    </div>
+
+    <div class="action-buttons">
+      <button class="btn btn-secondary" [routerLink]="['/']">
+        <i class="material-icons">home</i>
+        Go to Home
+      </button>
+      <button class="btn btn-primary" [routerLink]="['/subscriptions']">
+        <i class="material-icons">dashboard</i>
+        View My Bookings
+      </button>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="error-content">
+    <div class="error-icon">
+      <i class="material-icons">error</i>
+    </div>
+
+    <h1>Something Went Wrong</h1>
+    <p class="error-message">{{ error }}</p>
+
+    <div class="info-box error">
+      <p>
+        <i class="material-icons">help</i>
+        If you believe this is an error, please contact our support team with your payment details.
+      </p>
+    </div>
+
+    <div class="action-buttons">
+      <button class="btn btn-secondary" [routerLink]="['/']">
+        <i class="material-icons">home</i>
+        Go to Home
+      </button>
+      <button class="btn btn-primary" [routerLink]="['/travels']">
+        <i class="material-icons">search</i>
+        Browse Travels
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div *ngIf="isLoading" class="loading-container">
+  <div class="spinner"></div>
+  <p>Confirming your payment...</p>
+</div>

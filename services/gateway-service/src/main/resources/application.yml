@@ -1,0 +1,462 @@
+spring:
+  application:
+    name: gateway-service
+
+  cloud:
+    gateway:
+      routes:
+        # User Service - Authentication Routes (Public)
+        - id: user-service-auth-register
+          uri: lb://user-service
+          predicates:
+            - Path=/api/v1/auth/register
+            - Method=POST
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: user-service
+                fallbackUri: forward:/fallback/user-service
+
+        - id: user-service-auth-login
+          uri: lb://user-service
+          predicates:
+            - Path=/api/v1/auth/login
+            - Method=POST
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: user-service
+                fallbackUri: forward:/fallback/user-service
+
+        - id: user-service-auth-check
+          uri: lb://user-service
+          predicates:
+            - Path=/api/v1/auth/check-username, /api/v1/auth/check-email
+            - Method=GET
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: user-service
+                fallbackUri: forward:/fallback/user-service
+
+        # User Service - Profile Route (Protected)
+        - id: user-service-profile
+          uri: lb://user-service
+          predicates:
+            - Path=/api/v1/users/profile
+          filters:
+            - Authentication
+            - name: CircuitBreaker
+              args:
+                name: user-service
+                fallbackUri: forward:/fallback/user-service
+
+        # User Service - Public User Routes
+        - id: user-service-public
+          uri: lb://user-service
+          predicates:
+            - Path=/api/v1/users/*/avatar, /api/v1/users/{userId}, /api/v1/users/username/{username}, /api/v1/users/{userId}/exists, /api/v1/users/search
+            - Method=GET
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: user-service
+                fallbackUri: forward:/fallback/user-service
+
+        # User Service - Protected Routes
+        - id: user-service-protected
+          uri: lb://user-service
+          predicates:
+            - Path=/api/v1/users/**
+          filters:
+            - Authentication
+            - name: CircuitBreaker
+              args:
+                name: user-service
+                fallbackUri: forward:/fallback/user-service
+
+        # Travel Service Routes
+        # Protected routes MUST come before public routes for proper matching
+        - id: travel-service-my-travels
+          uri: lb://travel-service
+          predicates:
+            - Path=/api/v1/travels/my-travels
+            - Method=GET
+          filters:
+            - Authentication
+            - name: CircuitBreaker
+              args:
+                name: travel-service
+                fallbackUri: forward:/fallback/travel-service
+
+        - id: travel-service-public-advanced-search
+          uri: lb://travel-service
+          predicates:
+            - Path=/api/v1/travels/search/advanced
+            - Method=GET
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: travel-service
+                fallbackUri: forward:/fallback/travel-service
+
+        - id: travel-service-public-list
+          uri: lb://travel-service
+          predicates:
+            - Path=/api/v1/travels, /api/v1/travels/{id}
+            - Method=GET
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: travel-service
+                fallbackUri: forward:/fallback/travel-service
+
+        - id: travel-service-public-browsing
+          uri: lb://travel-service
+          predicates:
+            - Path=/api/v1/travels/available, /api/v1/travels/upcoming, /api/v1/travels/top-rated, /api/v1/travels/autocomplete
+            - Method=GET
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: travel-service
+                fallbackUri: forward:/fallback/travel-service
+
+        - id: travel-service-protected
+          uri: lb://travel-service
+          predicates:
+            - Path=/api/v1/travels/**
+          filters:
+            - Authentication
+            - name: CircuitBreaker
+              args:
+                name: travel-service
+                fallbackUri: forward:/fallback/travel-service
+
+        - id: subscription-service
+          uri: lb://travel-service
+          predicates:
+            - Path=/api/v1/subscriptions/**
+          filters:
+            - Authentication
+            - name: CircuitBreaker
+              args:
+                name: travel-service
+                fallbackUri: forward:/fallback/travel-service
+
+        - id: recommendation-service
+          uri: lb://travel-service
+          predicates:
+            - Path=/api/v1/recommendations/**
+          filters:
+            - Authentication
+            - name: CircuitBreaker
+              args:
+                name: travel-service
+                fallbackUri: forward:/fallback/travel-service
+
+        # Payment Service Routes
+        - id: payment-service-protected
+          uri: lb://payment-service
+          predicates:
+            - Path=/api/v1/payments/**
+          filters:
+            - Authentication
+            - name: CircuitBreaker
+              args:
+                name: payment-service
+                fallbackUri: forward:/fallback/payment-service
+
+        - id: payment-webhooks-stripe
+          uri: lb://payment-service
+          predicates:
+            - Path=/api/v1/webhooks/stripe
+            - Method=POST
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: payment-service
+                fallbackUri: forward:/fallback/payment-service
+
+        - id: payment-webhooks-paypal
+          uri: lb://payment-service
+          predicates:
+            - Path=/api/v1/webhooks/paypal
+            - Method=POST
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: payment-service
+                fallbackUri: forward:/fallback/payment-service
+
+        # Feedback Service Routes
+        # Protected routes MUST come before public routes
+        - id: feedback-service-my-feedbacks
+          uri: lb://feedback-service
+          predicates:
+            - Path=/api/v1/feedbacks/my-feedbacks
+            - Method=GET
+          filters:
+            - Authentication
+            - name: CircuitBreaker
+              args:
+                name: feedback-service
+                fallbackUri: forward:/fallback/feedback-service
+
+        - id: feedback-service-public-view
+          uri: lb://feedback-service
+          predicates:
+            - Path=/api/v1/feedbacks/travel/{travelId}, /api/v1/feedbacks/travel/{travelId}/average-rating, /api/v1/feedbacks/travel/{travelId}/count
+            - Method=GET
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: feedback-service
+                fallbackUri: forward:/fallback/feedback-service
+
+        - id: feedback-service-protected
+          uri: lb://feedback-service
+          predicates:
+            - Path=/api/v1/feedbacks/**
+          filters:
+            - Authentication
+            - name: CircuitBreaker
+              args:
+                name: feedback-service
+                fallbackUri: forward:/fallback/feedback-service
+
+        - id: report-service-protected
+          uri: lb://feedback-service
+          predicates:
+            - Path=/api/v1/reports/**
+          filters:
+            - Authentication
+            - name: CircuitBreaker
+              args:
+                name: feedback-service
+                fallbackUri: forward:/fallback/feedback-service
+
+        - id: dashboard-service-protected
+          uri: lb://feedback-service
+          predicates:
+            - Path=/api/v1/dashboard/**
+          filters:
+            - Authentication
+            - name: CircuitBreaker
+              args:
+                name: feedback-service
+                fallbackUri: forward:/fallback/feedback-service
+
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns:
+              - "http://localhost:*"
+              - "https://localhost:*"
+              - "http://127.0.0.1:*"
+              - "https://127.0.0.1:*"
+              - "http://192.168.*.*:*"
+              - "https://192.168.*.*:*"
+              - "${ALLOWED_ORIGINS:*}"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+              - HEAD
+              - PATCH
+            allowedHeaders:
+              - "*"
+            exposedHeaders:
+              - Authorization
+              - Content-Type
+              - X-Total-Count
+              - X-User-Id
+              - X-User-Name
+              - X-User-Role
+            allowCredentials: true
+            maxAge: 3600
+
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:redis}
+    timeout: 2000ms
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+
+# Server Configuration
+server:
+  port: ${SERVER_PORT:9080}
+
+jwt:
+  secret: ${JWT_SECRET:mySecretKeyForJWTTokenGeneration2024}
+  expiration: ${JWT_EXPIRATION:86400000} # 24 hours in milliseconds
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
+
+# Eureka Client Configuration
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+    healthcheck:
+      enabled: true
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
+
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,gateway,circuitbreakers,circuitbreakerevents
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: true
+  health:
+    circuitbreakers:
+      enabled: true
+
+# Logging Configuration
+logging:
+  level:
+    com.travelms.gateway: ${LOG_LEVEL:INFO}
+    org.springframework.cloud.gateway: INFO
+    io.github.resilience4j: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# OpenAPI/Swagger Documentation
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    urls:
+      - name: Gateway Service
+        url: /v3/api-docs
+      - name: User Service (Auth + Users)
+        url: /user-service/v3/api-docs
+      - name: Travel Service
+        url: /travel-service/v3/api-docs
+      - name: Payment Service
+        url: /payment-service/v3/api-docs
+      - name: Feedback Service
+        url: /feedback-service/v3/api-docs
+
+# Circuit Breaker Configuration
+resilience4j:
+  circuitbreaker:
+    instances:
+      default:
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        waitDurationInOpenState: 30s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+        registerHealthIndicator: true
+
+      user-service:
+        slidingWindowSize: 20
+        minimumNumberOfCalls: 10
+        permittedNumberOfCallsInHalfOpenState: 5
+        waitDurationInOpenState: 60s
+        failureRateThreshold: 40
+
+      travel-service:
+        slidingWindowSize: 15
+        minimumNumberOfCalls: 8
+        permittedNumberOfCallsInHalfOpenState: 4
+        waitDurationInOpenState: 45s
+        failureRateThreshold: 45
+
+      payment-service:
+        slidingWindowSize: 25
+        minimumNumberOfCalls: 12
+        permittedNumberOfCallsInHalfOpenState: 6
+        waitDurationInOpenState: 90s
+        failureRateThreshold: 35
+
+      feedback-service:
+        slidingWindowSize: 15
+        minimumNumberOfCalls: 8
+        permittedNumberOfCallsInHalfOpenState: 4
+        waitDurationInOpenState: 45s
+        failureRateThreshold: 45
+
+  timelimiter:
+    instances:
+      default:
+        timeoutDuration: 30s
+      user-service:
+        timeoutDuration: 15s
+      travel-service:
+        timeoutDuration: 60s
+      payment-service:
+        timeoutDuration: 45s
+      feedback-service:
+        timeoutDuration: 20s
+
+---
+# Docker Profile
+spring:
+  config:
+    activate:
+      on-profile: docker
+
+  redis:
+    host: ${REDIS_HOST:redis}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://registry-service:8761/eureka/}
+
+server:
+  port: 9080
+
+logging:
+  level:
+    com.travelms.gateway: INFO
+
+---
+# Test Profile
+spring:
+  config:
+    activate:
+      on-profile: test
+
+  redis:
+    host: localhost
+    port: 6380
+
+eureka:
+  client:
+    enabled: false
+
+logging:
+  level:
+    com.travelms.gateway: DEBUG

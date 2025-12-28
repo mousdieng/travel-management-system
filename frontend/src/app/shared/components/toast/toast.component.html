@@ -1,0 +1,38 @@
+<div class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-md">
+  @for (toast of toasts(); track $index) {
+    <div
+      [class]="'flex items-start p-4 rounded-lg shadow-lg border transform transition-all duration-300 ' + getBackgroundColor(toast.type)"
+      [@toastAnimation]
+    >
+      <!-- Icon -->
+      <div [class]="'rounded-full w-8 h-8 flex items-center justify-center text-white text-sm font-bold mr-3 flex-shrink-0 ' + getIconColor(toast.type)">
+        {{ getIcon(toast.type) }}
+      </div>
+
+      <!-- Message -->
+      <div class="flex-1 pt-0.5">
+        <p [class]="'text-sm font-medium ' + getTextColor(toast.type)">
+          {{ toast.message }}
+        </p>
+
+        <!-- Action Button (if provided) -->
+        @if (toast.action) {
+          <button
+            (click)="onActionClick(toast)"
+            [class]="'text-xs font-semibold mt-2 underline hover:no-underline ' + getTextColor(toast.type)"
+          >
+            {{ toast.action.label }}
+          </button>
+        }
+      </div>
+
+      <!-- Close Button -->
+      <button
+        (click)="removeToast(toast.id)"
+        [class]="'ml-4 text-lg font-bold hover:opacity-75 transition-opacity ' + getTextColor(toast.type)"
+      >
+        ×
+      </button>
+    </div>
+  }
+</div>

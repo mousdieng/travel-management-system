@@ -1,0 +1,358 @@
+<div class="booking-create-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Create New Booking</h1>
+      <p class="subtitle">Follow the steps below to create a new booking</p>
+    </div>
+    <button mat-stroked-button (click)="cancel()">
+      <mat-icon>close</mat-icon>
+      Cancel
+    </button>
+  </div>
+
+  <!-- Stepper -->
+  <mat-card class="stepper-card">
+    <mat-horizontal-stepper #stepper linear>
+      <!-- Step 1: Select Travel -->
+      <mat-step [stepControl]="travelFormGroup" label="Select Travel">
+        <form [formGroup]="travelFormGroup">
+          <div class="step-content">
+            <h2>Choose Your Travel Destination</h2>
+            <p class="step-description">Select a travel package and specify the number of passengers</p>
+
+            <!-- Number of Passengers -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Number of Passengers</mat-label>
+              <input matInput type="number" formControlName="numberOfPassengers" min="1" max="20">
+              <mat-icon matPrefix>people</mat-icon>
+              <mat-hint>Maximum 20 passengers per booking</mat-hint>
+            </mat-form-field>
+
+            <!-- Loading State -->
+            <div class="loading-state" *ngIf="isLoadingTravels">
+              <mat-spinner diameter="40"></mat-spinner>
+              <p>Loading available travels...</p>
+            </div>
+
+            <!-- Travel Selection -->
+            <div class="travels-grid" *ngIf="!isLoadingTravels">
+              <mat-radio-group formControlName="travelId" class="travel-radio-group">
+                <mat-card
+                  *ngFor="let travel of travels"
+                  class="travel-card"
+                  [class.selected]="travelFormGroup.get('travelId')?.value === travel.id">
+
+                  <mat-radio-button [value]="travel.id" class="travel-radio">
+                    <!-- Travel Image -->
+                    <div class="travel-image" *ngIf="travel.images && travel.images.length > 0">
+                      <img [src]="travel.images[0]" [alt]="travel.title">
+                    </div>
+                    <div class="travel-image placeholder" *ngIf="!travel.images || travel.images.length === 0">
+                      <mat-icon>landscape</mat-icon>
+                    </div>
+
+                    <!-- Travel Content -->
+                    <mat-card-content>
+                      <h3 class="travel-title">{{ travel.title }}</h3>
+                      <p class="travel-description">{{ travel.description }}</p>
+
+                      <div class="travel-details">
+                        <div class="detail-item">
+                          <mat-icon>location_on</mat-icon>
+                          <span>{{ travel.destination?.name }}</span>
+                        </div>
+                        <div class="detail-item">
+                          <mat-icon>calendar_today</mat-icon>
+                          <span>{{ travel.startDate | date:'mediumDate' }}</span>
+                        </div>
+                        <div class="detail-item">
+                          <mat-icon>schedule</mat-icon>
+                          <span>{{ getTravelDuration(travel) }} days</span>
+                        </div>
+                      </div>
+
+                      <div class="travel-pricing">
+                        <span class="price">{{ formatCurrency(travel.price || 0, travel.currency || 'USD') }}</span>
+                        <span class="per-person">per person</span>
+                      </div>
+                    </mat-card-content>
+                  </mat-radio-button>
+                </mat-card>
+              </mat-radio-group>
+
+              <!-- Empty State -->
+              <div class="empty-state" *ngIf="travels.length === 0">
+                <mat-icon>travel_explore</mat-icon>
+                <h3>No Travel Packages Available</h3>
+                <p>There are currently no active travel packages available for booking.</p>
+              </div>
+            </div>
+
+            <!-- Step Actions -->
+            <div class="step-actions">
+              <button mat-button (click)="cancel()">Cancel</button>
+              <button mat-raised-button color="primary" (click)="goToNextStep()" [disabled]="!travelFormGroup.valid">
+                Next
+                <mat-icon>arrow_forward</mat-icon>
+              </button>
+            </div>
+          </div>
+        </form>
+      </mat-step>
+
+      <!-- Step 2: Passenger Details -->
+      <mat-step [stepControl]="passengersFormGroup" label="Passenger Details">
+        <form [formGroup]="passengersFormGroup">
+          <div class="step-content">
+            <h2>Passenger Information</h2>
+            <p class="step-description">Enter details for all {{ travelFormGroup.get('numberOfPassengers')?.value }} passengers</p>
+
+            <!-- Passengers List -->
+            <div formArrayName="passengers">
+              <mat-accordion>
+                <mat-expansion-panel
+                  *ngFor="let passenger of passengers.controls; let i = index"
+                  [expanded]="i === 0">
+
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>
+                      <mat-icon>person</mat-icon>
+                      Passenger {{ i + 1 }}
+                    </mat-panel-title>
+                    <mat-panel-description>
+                      <span *ngIf="getPassengerFormGroup(i).get('firstName')?.value">
+                        {{ getPassengerFormGroup(i).get('firstName')?.value }}
+                        {{ getPassengerFormGroup(i).get('lastName')?.value }}
+                      </span>
+                      <span *ngIf="!getPassengerFormGroup(i).get('firstName')?.value" class="incomplete">
+                        Required information
+                      </span>
+                    </mat-panel-description>
+                  </mat-expansion-panel-header>
+
+                  <div [formGroupName]="i" class="passenger-form">
+                    <div class="form-row">
+                      <mat-form-field appearance="outline">
+                        <mat-label>First Name</mat-label>
+                        <input matInput formControlName="firstName" required>
+                        <mat-icon matPrefix>person</mat-icon>
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline">
+                        <mat-label>Last Name</mat-label>
+                        <input matInput formControlName="lastName" required>
+                      </mat-form-field>
+                    </div>
+
+                    <div class="form-row">
+                      <mat-form-field appearance="outline">
+                        <mat-label>Email</mat-label>
+                        <input matInput type="email" formControlName="email" required>
+                        <mat-icon matPrefix>email</mat-icon>
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline">
+                        <mat-label>Phone</mat-label>
+                        <input matInput type="tel" formControlName="phone" required>
+                        <mat-icon matPrefix>phone</mat-icon>
+                      </mat-form-field>
+                    </div>
+
+                    <div class="form-row">
+                      <mat-form-field appearance="outline">
+                        <mat-label>Date of Birth</mat-label>
+                        <input matInput [matDatepicker]="dobPicker" formControlName="dateOfBirth" required>
+                        <mat-datepicker-toggle matSuffix [for]="dobPicker"></mat-datepicker-toggle>
+                        <mat-datepicker #dobPicker></mat-datepicker>
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline">
+                        <mat-label>Passenger Type</mat-label>
+                        <mat-select formControlName="type" required>
+                          <mat-option *ngFor="let type of passengerTypes" [value]="type.value">
+                            <mat-icon>{{ type.icon }}</mat-icon>
+                            {{ type.label }}
+                          </mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+
+                    <div class="form-row">
+                      <mat-form-field appearance="outline">
+                        <mat-label>Passport Number</mat-label>
+                        <input matInput formControlName="passportNumber">
+                        <mat-icon matPrefix>badge</mat-icon>
+                        <mat-hint>Optional - Required for international travel</mat-hint>
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline">
+                        <mat-label>Nationality</mat-label>
+                        <input matInput formControlName="nationality">
+                        <mat-icon matPrefix>flag</mat-icon>
+                      </mat-form-field>
+                    </div>
+
+                    <mat-form-field appearance="outline" class="full-width">
+                      <mat-label>Special Requirements</mat-label>
+                      <textarea matInput formControlName="specialRequirements" rows="2"></textarea>
+                      <mat-hint>Dietary restrictions, medical needs, etc.</mat-hint>
+                    </mat-form-field>
+                  </div>
+                </mat-expansion-panel>
+              </mat-accordion>
+            </div>
+
+            <!-- Special Requests -->
+            <mat-form-field appearance="outline" class="full-width special-requests">
+              <mat-label>Special Requests for Entire Group</mat-label>
+              <textarea matInput formControlName="specialRequests" rows="3"></textarea>
+              <mat-hint>Any special requests or requirements for your entire group</mat-hint>
+            </mat-form-field>
+
+            <!-- Step Actions -->
+            <div class="step-actions">
+              <button mat-button (click)="goToPreviousStep()">
+                <mat-icon>arrow_back</mat-icon>
+                Back
+              </button>
+              <button mat-raised-button color="primary" (click)="goToNextStep()" [disabled]="!passengersFormGroup.valid">
+                Next
+                <mat-icon>arrow_forward</mat-icon>
+              </button>
+            </div>
+          </div>
+        </form>
+      </mat-step>
+
+      <!-- Step 3: Review & Confirm -->
+      <mat-step [stepControl]="reviewFormGroup" label="Review & Confirm">
+        <form [formGroup]="reviewFormGroup">
+          <div class="step-content">
+            <h2>Review Your Booking</h2>
+            <p class="step-description">Please review all details before confirming your booking</p>
+
+            <div class="review-grid">
+              <!-- Travel Summary -->
+              <mat-card class="review-card">
+                <mat-card-header>
+                  <mat-card-title>
+                    <mat-icon>flight_takeoff</mat-icon>
+                    Travel Summary
+                  </mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                  <div class="summary-item">
+                    <span class="label">Destination:</span>
+                    <span class="value">{{ selectedTravel?.title }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="label">Location:</span>
+                    <span class="value">{{ selectedTravel?.destination?.name }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="label">Departure Date:</span>
+                    <span class="value">{{ selectedTravel?.startDate | date:'fullDate' }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="label">Return Date:</span>
+                    <span class="value">{{ selectedTravel?.endDate | date:'fullDate' }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="label">Duration:</span>
+                    <span class="value">{{ getTravelDuration(selectedTravel!) }} days</span>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+
+              <!-- Passengers Summary -->
+              <mat-card class="review-card">
+                <mat-card-header>
+                  <mat-card-title>
+                    <mat-icon>people</mat-icon>
+                    Passengers ({{ passengers.length }})
+                  </mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                  <div class="passenger-summary" *ngFor="let passenger of passengers.controls; let i = index">
+                    <mat-icon>person</mat-icon>
+                    <div class="passenger-info">
+                      <strong>
+                        {{ getPassengerFormGroup(i).get('firstName')?.value }}
+                        {{ getPassengerFormGroup(i).get('lastName')?.value }}
+                      </strong>
+                      <span class="type">{{ getPassengerTypeLabel(getPassengerFormGroup(i).get('type')?.value) }}</span>
+                    </div>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+
+              <!-- Pricing Summary -->
+              <mat-card class="review-card pricing-summary" *ngIf="calculatedPricing">
+                <mat-card-header>
+                  <mat-card-title>
+                    <mat-icon>attach_money</mat-icon>
+                    Pricing Summary
+                  </mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                  <div class="price-row">
+                    <span class="label">Base Price ({{ calculatedPricing.numberOfPassengers }} x {{ formatCurrency(calculatedPricing.basePrice, calculatedPricing.currency) }}):</span>
+                    <span class="value">{{ formatCurrency(calculatedPricing.subtotal, calculatedPricing.currency) }}</span>
+                  </div>
+                  <div class="price-row">
+                    <span class="label">Taxes:</span>
+                    <span class="value">{{ formatCurrency(calculatedPricing.taxes, calculatedPricing.currency) }}</span>
+                  </div>
+                  <div class="price-row">
+                    <span class="label">Service Fees:</span>
+                    <span class="value">{{ formatCurrency(calculatedPricing.fees, calculatedPricing.currency) }}</span>
+                  </div>
+                  <mat-divider></mat-divider>
+                  <div class="price-row total">
+                    <span class="label">Total Amount:</span>
+                    <span class="value">{{ formatCurrency(calculatedPricing.totalAmount, calculatedPricing.currency) }}</span>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+            </div>
+
+            <!-- Additional Notes -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Additional Notes</mat-label>
+              <textarea matInput formControlName="notes" rows="3"></textarea>
+              <mat-hint>Any additional notes or comments</mat-hint>
+            </mat-form-field>
+
+            <!-- Terms and Conditions -->
+            <div class="terms-section">
+              <mat-checkbox formControlName="agreedToTerms" required>
+                I agree to the <a href="/terms" target="_blank">Terms and Conditions</a> and
+                <a href="/privacy" target="_blank">Privacy Policy</a>
+              </mat-checkbox>
+            </div>
+
+            <!-- Step Actions -->
+            <div class="step-actions">
+              <button mat-button (click)="goToPreviousStep()">
+                <mat-icon>arrow_back</mat-icon>
+                Back
+              </button>
+              <button
+                mat-raised-button
+                color="primary"
+                (click)="submitBooking()"
+                [disabled]="!reviewFormGroup.valid || isSubmitting">
+                <mat-spinner diameter="20" *ngIf="isSubmitting"></mat-spinner>
+                <span *ngIf="!isSubmitting">
+                  <mat-icon>check_circle</mat-icon>
+                  Confirm Booking
+                </span>
+              </button>
+            </div>
+          </div>
+        </form>
+      </mat-step>
+    </mat-horizontal-stepper>
+  </mat-card>
+</div>

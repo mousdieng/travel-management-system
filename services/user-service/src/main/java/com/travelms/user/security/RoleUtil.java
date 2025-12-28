@@ -1,0 +1,158 @@
+package com.travelms.user.security;
+
+import com.travelms.user.model.enums.Role;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+import java.util.Collection;
+
+/**
+ * Utility class for role-based authorization checks
+ * Implements hierarchical role permissions as defined in instruction.txt:
+ * - ADMIN can do everything (ADMIN + TRAVEL_MANAGER + TRAVELER permissions)
+ * - TRAVEL_MANAGER can do MANAGER actions + TRAVELER actions
+ * - TRAVELER can only do TRAVELER actions
+ */
+public final class RoleUtil {
+
+    private RoleUtil() {
+        // Utility class - prevent instantiation
+    }
+
+    /**
+     * Check if the current user has the specified role
+     */
+    public static boolean hasRole(Role role) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return false;
+        }
+
+        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+        return authorities.stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_" + role.name()));
+    }
+
+    /**
+     * Check if the current user is an ADMIN
+     */
+    public static boolean isAdmin() {
+        return hasRole(Role.ADMIN);
+    }
+
+    /**
+     * Check if the current user is a TRAVEL_MANAGER
+     */
+    public static boolean isManager() {
+        return hasRole(Role.TRAVEL_MANAGER);
+    }
+
+    /**
+     * Check if the current user is a TRAVELER
+     */
+    public static boolean isTraveler() {
+        return hasRole(Role.TRAVELER);
+    }
+
+    /**
+     * Check if user has ADMIN or MANAGER role
+     * (ADMIN can do everything a MANAGER can do)
+     */
+    public static boolean isAdminOrManager() {
+        return isAdmin() || isManager();
+    }
+
+    /**
+     * Check if user has any role (ADMIN, MANAGER, or TRAVELER)
+     * (ADMIN and MANAGER can do everything a TRAVELER can do)
+     */
+    public static boolean isAnyRole() {
+        return isAdmin() || isManager() || isTraveler();
+    }
+
+    /**
+     * Check if the current user can manage travels
+     * ADMIN and TRAVEL_MANAGER can manage travels
+     */
+    public static boolean canManageTravels() {
+        return isAdminOrManager();
+    }
+
+    /**
+     * Check if the current user can manage users
+     * Only ADMIN can manage users
+     */
+    public static boolean canManageUsers() {
+        return isAdmin();
+    }
+
+    /**
+     * Check if the current user can view all statistics
+     * Only ADMIN can view all statistics
+     */
+    public static boolean canViewAllStatistics() {
+        return isAdmin();
+    }
+
+    /**
+     * Check if the current user can manage subscribers
+     * ADMIN and TRAVEL_MANAGER can manage subscribers
+     */
+    public static boolean canManageSubscribers() {
+        return isAdminOrManager();
+    }
+
+    /**
+     * Check if the current user can subscribe to travels
+     * All roles can subscribe (ADMIN, MANAGER, TRAVELER)
+     */
+    public static boolean canSubscribeToTravels() {
+        return isAnyRole();
+    }
+
+    /**
+     * Check if the current user can provide feedback
+     * All roles can provide feedback (ADMIN, MANAGER, TRAVELER)
+     */
+    public static boolean canProvideFeedback() {
+        return isAnyRole();
+    }
+
+    /**
+     * Check if the current user can view reports
+     * Only ADMIN can view all reports
+     */
+    public static boolean canViewReports() {
+        return isAdmin();
+    }
+
+    /**
+     * Check if the current user can file reports
+     * All roles can file reports (ADMIN, MANAGER, TRAVELER)
+     */
+    public static boolean canFileReports() {
+        return isAnyRole();
+    }
+
+    /**
+     * Get the current user's role
+     */
+    public static Role getCurrentUserRole() {
+        if (isAdmin()) return Role.ADMIN;
+        if (isManager()) return Role.TRAVEL_MANAGER;
+        if (isTraveler()) return Role.TRAVELER;
+        return null;
+    }
+
+    /**
+     * Get the current username
+     */
+    public static String getCurrentUsername() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+        return authentication.getName();
+    }
+}

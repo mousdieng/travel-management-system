@@ -1,0 +1,122 @@
+spring:
+  application:
+    name: travel-service
+
+  # PostgreSQL Database Configuration
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:travel_db}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  # JPA/Hibernate Configuration
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: ${SHOW_SQL:false}
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    open-in-view: false
+
+  # Elasticsearch Configuration
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
+    username: ${ELASTICSEARCH_USERNAME:}
+    password: ${ELASTICSEARCH_PASSWORD:}
+
+  # Neo4j Configuration
+  # Note: Using port 7688 to avoid conflict with other Neo4j instances
+  neo4j:
+    uri: ${NEO4J_URI:bolt://localhost:7688}
+    authentication:
+      username: ${NEO4J_USERNAME:neo4j}
+      password: ${NEO4J_PASSWORD:neo4j123}
+
+  data:
+    neo4j:
+      database: ${NEO4J_DATABASE:neo4j}
+
+# Server Configuration
+server:
+  port: ${PORT:9083}
+  servlet:
+    context-path: /
+
+# JWT Configuration (must match all services)
+jwt:
+  secret: ${JWT_SECRET:mySecretKeyForJWTTokenGeneration2024}
+  expiration: ${JWT_EXPIRATION:86400000}  # 24 hours in milliseconds
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}  # 7 days in milliseconds
+
+# MinIO Configuration
+minio:
+  enabled: ${MINIO_ENABLED:true}
+  url: ${MINIO_URL:http://localhost:9001}
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  secret-key: ${MINIO_SECRET_KEY:minioadmin123}
+  bucket-name: ${MINIO_BUCKET_NAME:travel-images}
+
+# Eureka Client Configuration
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+    hostname: ${HOSTNAME:localhost}
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+
+# Management & Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  health:
+    elasticsearch:
+      enabled: true
+    neo4j:
+      enabled: true
+
+# Logging Configuration
+logging:
+  level:
+    com.travelms.travel: ${LOG_LEVEL:INFO}
+    org.springframework.data.elasticsearch: ${LOG_LEVEL:INFO}
+    org.springframework.data.neo4j: ${LOG_LEVEL:INFO}
+    org.hibernate.SQL: ${SQL_LOG_LEVEL:WARN}
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# SpringDoc OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+
+# Kafka Configuration
+kafka:
+  bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  consumer:
+    group-id: travel-service-group
+    key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+    properties:
+      spring.json.trusted.packages: "*"
+    auto-offset-reset: earliest
+  topics:
+    user-deleted: user-deleted-events
+    payment-completed: payment-completed-events
+    payment-refunded: payment-refunded-events
+    feedback-changed: feedback-changed-events

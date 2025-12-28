@@ -1,0 +1,459 @@
+version: '3.8'
+
+networks:
+  travelms-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  elasticsearch_data:
+  neo4j_data:
+  redis_data:
+  jenkins_home:
+  sonarqube_data:
+  prometheus_data:
+  grafana_data:
+  minio_data:
+
+services:
+  # ============================================================================
+  # INFRASTRUCTURE SERVICES
+  # ============================================================================
+
+  # Service Registry (Eureka)
+#  registry-service:
+#    build:
+#      context: ./services/registry-service
+#      dockerfile: Dockerfile
+#    container_name: registry-service
+#    ports:
+#      - "8761:8761"
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#    networks:
+#      - travelms-network
+#    healthcheck:
+#      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8761/actuator/health"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 5
+#      start_period: 60s
+
+  # ============================================================================
+  # DATABASE SERVICES
+  # ============================================================================
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh:ro
+    networks:
+      - travelms-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass ${REDIS_PASSWORD:-redis}
+    volumes:
+      - redis_data:/data
+    networks:
+      - travelms-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # MinIO Object Storage
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    restart: unless-stopped
+    ports:
+      - "9001:9000"    # API port (mapped to avoid conflict with other MinIO instances)
+      - "9002:9001"    # Console port
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - travelms-network  # Fixed: was using neo4flix-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # Elasticsearch
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: elasticsearch
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - xpack.security.enabled=false
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - travelms-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Neo4j Graph Database
+  neo4j:
+    image: neo4j:5.13-community
+    container_name: neo4j
+    restart: unless-stopped
+    ports:
+      - "7475:7474"  # HTTP (changed from 7474 to avoid conflict with other Neo4j instances)
+      - "7688:7687"  # Bolt (changed from 7687 to avoid conflict with other Neo4j instances)
+    environment:
+      # Use NEO4J_AUTH with proper format (username/password)
+      # If you already have data, use the existing password
+      - NEO4J_AUTH=${NEO4J_AUTH:-neo4j/neo4j123}
+      # Updated config names (Neo4j 5.x)
+      - NEO4J_server_memory_pagecache_size=512M
+      - NEO4J_server_memory_heap_max__size=1G
+      # Accept license
+      - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+    volumes:
+      - neo4j_data:/data
+      - neo4j_data:/logs
+    networks:
+      - travelms-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:7474 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Zookeeper (Required for Kafka)
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - travelms-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Kafka Message Broker
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+      KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 300000
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    networks:
+      - travelms-network
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ============================================================================
+  # MICROSERVICES
+  # ============================================================================
+
+  # Auth Service
+#  auth-service:
+#    build:
+#      context: ./services/auth-service
+#      dockerfile: Dockerfile
+#    container_name: auth-service
+#    ports:
+#      - "9081:9081"
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#      - DB_HOST=postgres
+#      - DB_PORT=5432
+#      - DB_NAME=auth_db
+#      - DB_USER=postgres
+#      - DB_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+#      - EUREKA_SERVER_URL=http://registry-service:8761/eureka/
+#      - JWT_SECRET=${JWT_SECRET:-your-secret-key-change-in-production-min-32-chars}
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      registry-service:
+#        condition: service_healthy
+#    networks:
+#      - travelms-network
+#    healthcheck:
+#      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9081/actuator/health"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 5
+#      start_period: 90s
+#
+#  # User Service
+#  user-service:
+#    build:
+#      context: ./services/user-service
+#      dockerfile: Dockerfile
+#    container_name: user-service
+#    ports:
+#      - "9082:9082"
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#      - DB_HOST=postgres
+#      - DB_PORT=5432
+#      - DB_NAME=user_db
+#      - DB_USER=postgres
+#      - DB_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+#      - EUREKA_SERVER_URL=http://registry-service:8761/eureka/
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      registry-service:
+#        condition: service_healthy
+#    networks:
+#      - travelms-network
+#    volumes:
+#      - ./uploads:/app/uploads
+#    healthcheck:
+#      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9082/actuator/health"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 5
+#      start_period: 90s
+#
+#  # Travel Service
+#  travel-service:
+#    build:
+#      context: ./services/travel-service
+#      dockerfile: Dockerfile
+#    container_name: travel-service
+#    ports:
+#      - "9083:9083"
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#      - DB_HOST=postgres
+#      - DB_PORT=5432
+#      - DB_NAME=travel_db
+#      - DB_USER=postgres
+#      - DB_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+#      - ELASTICSEARCH_URL=http://elasticsearch:9200
+#      - NEO4J_URL=bolt://neo4j:7687
+#      - NEO4J_USER=neo4j
+#      - NEO4J_PASSWORD=${NEO4J_PASSWORD:-neo4j123}
+#      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+#      - EUREKA_SERVER_URL=http://registry-service:8761/eureka/
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      elasticsearch:
+#        condition: service_healthy
+#      neo4j:
+#        condition: service_healthy
+#      kafka:
+#        condition: service_healthy
+#      registry-service:
+#        condition: service_healthy
+#    networks:
+#      - travelms-network
+#    healthcheck:
+#      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9083/actuator/health"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 5
+#      start_period: 120s
+#
+#  # Payment Service
+#  payment-service:
+#    build:
+#      context: ./services/payment-service
+#      dockerfile: Dockerfile
+#    container_name: payment-service
+#    ports:
+#      - "9084:9084"
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#      - DB_HOST=postgres
+#      - DB_PORT=5432
+#      - DB_NAME=payment_db
+#      - DB_USER=postgres
+#      - DB_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+#      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+#      - EUREKA_SERVER_URL=http://registry-service:8761/eureka/
+#      - STRIPE_API_KEY=${STRIPE_API_KEY}
+#      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+#      - PAYPAL_CLIENT_ID=${PAYPAL_CLIENT_ID}
+#      - PAYPAL_CLIENT_SECRET=${PAYPAL_CLIENT_SECRET}
+#      - PAYPAL_MODE=${PAYPAL_MODE:-sandbox}
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      kafka:
+#        condition: service_healthy
+#      registry-service:
+#        condition: service_healthy
+#    networks:
+#      - travelms-network
+#    healthcheck:
+#      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9084/actuator/health"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 5
+#      start_period: 90s
+#
+#  # Feedback Service
+#  feedback-service:
+#    build:
+#      context: ./services/feedback-service
+#      dockerfile: Dockerfile
+#    container_name: feedback-service
+#    ports:
+#      - "9085:9085"
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#      - DB_HOST=postgres
+#      - DB_PORT=5432
+#      - DB_NAME=feedback_db
+#      - DB_USER=postgres
+#      - DB_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+#      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+#      - EUREKA_SERVER_URL=http://registry-service:8761/eureka/
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      kafka:
+#        condition: service_healthy
+#      registry-service:
+#        condition: service_healthy
+#    networks:
+#      - travelms-network
+#    healthcheck:
+#      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9085/actuator/health"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 5
+#      start_period: 90s
+
+  # ============================================================================
+  # MONITORING (Optional - comment out if not needed)
+  # ============================================================================
+
+  # Prometheus
+#  prometheus:
+#    image: prom/prometheus:latest
+#    container_name: prometheus
+#    ports:
+#      - "9090:9090"
+#    volumes:
+#      - ./infrastructure/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+#      - prometheus_data:/prometheus
+#    command:
+#      - '--config.file=/etc/prometheus/prometheus.yml'
+#      - '--storage.tsdb.path=/prometheus'
+#    networks:
+#      - travelms-network
+#    profiles:
+#      - monitoring
+#
+#  # Grafana
+#  grafana:
+#    image: grafana/grafana:latest
+#    container_name: grafana
+#    ports:
+#      - "3000:3000"
+#    environment:
+#      - GF_SECURITY_ADMIN_USER=admin
+#      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+#    volumes:
+#      - grafana_data:/var/lib/grafana
+#    depends_on:
+#      - prometheus
+#    networks:
+#      - travelms-network
+#    profiles:
+#      - monitoring
+
+  # ============================================================================
+  # CI/CD (Optional - comment out if not needed)
+  # ============================================================================
+
+  # Jenkins
+#  jenkins:
+#    image: jenkins/jenkins:lts
+#    container_name: jenkins
+#    privileged: true
+#    user: root
+#    ports:
+#      - "8090:8080"
+#      - "50000:50000"
+#    volumes:
+#      - jenkins_home:/var/jenkins_home
+#      - /var/run/docker.sock:/var/run/docker.sock
+#    networks:
+#      - travelms-network
+#    profiles:
+#      - cicd
+#
+#  # SonarQube
+#  sonarqube:
+#    image: sonarqube:community
+#    container_name: sonarqube
+#    ports:
+#      - "9000:9000"
+#    environment:
+#      - SONAR_JDBC_URL=jdbc:postgresql://postgres:5432/sonarqube
+#      - SONAR_JDBC_USERNAME=postgres
+#      - SONAR_JDBC_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+#    volumes:
+#      - sonarqube_data:/opt/sonarqube/data
+#    depends_on:
+#      - postgres
+#    networks:
+#      - travelms-network
+#    profiles:
+#      - cicd

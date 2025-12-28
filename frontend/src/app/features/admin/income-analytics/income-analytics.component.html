@@ -1,0 +1,191 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-8">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900">Income Analytics</h1>
+      <p class="text-gray-600 mt-2">Platform revenue insights and manager performance</p>
+    </div>
+    <a
+      routerLink="/admin/dashboard"
+      class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition-colors"
+    >
+      Back to Dashboard
+    </a>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <app-stats-card
+      title="Total Income"
+      [value]="formatCurrency(totalIncome())"
+      icon="currency"
+      color="green"
+      subtitle="All-time platform revenue"
+    />
+    <app-stats-card
+      title="Monthly Average"
+      [value]="formatCurrency(monthlyAverage())"
+      icon="chart"
+      color="blue"
+      subtitle="Average per month"
+    />
+    <app-stats-card
+      title="Total Payments"
+      [value]="totalPayments()"
+      icon="check"
+      color="purple"
+      subtitle="Completed transactions"
+    />
+    <app-stats-card
+      title="Growth Rate"
+      [value]="formatPercentage(growthRate())"
+      icon="trending-up"
+      [color]="growthRate() >= 0 ? 'green' : 'red'"
+      subtitle="Month-over-month"
+      [trend]="{
+        value: growthRate(),
+        direction: growthRate() >= 0 ? 'up' : 'down',
+        label: 'vs last month'
+      }"
+    />
+  </div>
+
+  <!-- Charts Section -->
+  <div class="mb-8">
+    <h2 class="text-2xl font-bold text-gray-900 mb-6">Revenue Trends</h2>
+
+    <app-loading *ngIf="loading()"></app-loading>
+
+    @if (!loading()) {
+      <div class="mb-6">
+        <app-line-chart [config]="monthlyTrendChart()" />
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <app-loading *ngIf="categoriesLoading()"></app-loading>
+        @if (!categoriesLoading()) {
+          <app-pie-chart [config]="categoryIncomeChart()" />
+        }
+
+        <app-loading *ngIf="statsLoading()"></app-loading>
+        @if (!statsLoading()) {
+          <app-pie-chart [config]="paymentMethodChart()" />
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Manager Income Breakdown -->
+  <div>
+    <h2 class="text-2xl font-bold text-gray-900 mb-6">Top Earning Managers</h2>
+
+    <app-loading *ngIf="managersLoading()"></app-loading>
+
+    @if (!managersLoading()) {
+      @if (sortedManagers().length > 0) {
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th
+                  (click)="setSortColumn('rank')"
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                >
+                  Rank {{ getSortIcon('rank') }}
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Manager
+                </th>
+                <th
+                  (click)="setSortColumn('totalIncome')"
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                >
+                  Total Income {{ getSortIcon('totalIncome') }}
+                </th>
+                <th
+                  (click)="setSortColumn('thisMonthIncome')"
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                >
+                  This Month {{ getSortIcon('thisMonthIncome') }}
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Last Month
+                </th>
+                <th
+                  (click)="setSortColumn('growthRate')"
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                >
+                  Growth {{ getSortIcon('growthRate') }}
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Payments
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Avg Payment
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              @for (manager of sortedManagers(); track manager.managerId) {
+                <tr class="hover:bg-gray-50">
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span
+                      class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full"
+                      [ngClass]="getRankBadgeClass(manager.rank)"
+                    >
+                      #{{ manager.rank }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <div class="flex-shrink-0 h-10 w-10">
+                        <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                          <span class="text-indigo-600 font-semibold">{{ manager.managerName.charAt(0) }}</span>
+                        </div>
+                      </div>
+                      <div class="ml-4">
+                        <div class="text-sm font-medium text-gray-900">{{ manager.managerName }}</div>
+                        <div class="text-sm text-gray-500">{{ manager.email }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm font-semibold text-gray-900">{{ formatCurrency(manager.totalIncome) }}</div>
+                    <div class="text-xs text-gray-500">{{ manager.travelCount }} travels</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">{{ formatCurrency(manager.thisMonthIncome) }}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">{{ formatCurrency(manager.lastMonthIncome) }}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span
+                      class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                      [class.bg-green-100]="manager.growthRate >= 0"
+                      [class.text-green-800]="manager.growthRate >= 0"
+                      [class.bg-red-100]="manager.growthRate < 0"
+                      [class.text-red-800]="manager.growthRate < 0"
+                    >
+                      {{ formatPercentage(manager.growthRate) }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {{ manager.paymentCount }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {{ formatCurrency(manager.averagePayment) }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <div class="bg-white rounded-lg shadow text-center py-12">
+          <p class="text-gray-600">No manager income data available</p>
+        </div>
+      }
+    }
+  </div>
+</div>

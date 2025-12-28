@@ -1,0 +1,213 @@
+<div class="checkout-container" *ngIf="travel">
+  <!-- Travel Summary -->
+  <div class="travel-summary">
+    <h2>Booking Summary</h2>
+    <div class="travel-card">
+      <img [src]="travel.imageUrl || '/assets/placeholder-travel.jpg'" [alt]="travel.title" class="travel-image">
+      <div class="travel-details">
+        <h3>{{ travel.title }}</h3>
+        <p class="destination">
+          <i class="material-icons">location_on</i>
+          {{ travel.destination }}
+        </p>
+        <p class="dates">
+          <i class="material-icons">event</i>
+          {{ travel.startDate | date }} - {{ travel.endDate | date }}
+        </p>
+        <p class="price">
+          <strong>Price per person:</strong> {{ travel.price | currency }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Checkout Form -->
+  <div class="checkout-form">
+    <h2>Complete Your Booking</h2>
+
+    <form [formGroup]="checkoutForm" (ngSubmit)="onSubmit()">
+      <!-- Number of Participants -->
+      <div class="form-section">
+        <h3>Travelers</h3>
+        <div class="form-group">
+          <label for="numberOfParticipants">Number of Travelers *</label>
+          <input
+            type="number"
+            id="numberOfParticipants"
+            formControlName="numberOfParticipants"
+            min="1"
+            [max]="travel.availableSpots"
+            class="form-control">
+          <small *ngIf="travel.availableSpots" class="help-text">
+            {{ travel.availableSpots }} spots available
+          </small>
+        </div>
+      </div>
+
+      <!-- Passenger Details -->
+      <div class="form-section" *ngIf="showPassengerForm && passengers.length > 0">
+        <h3>Traveler Information</h3>
+        <button type="button" class="btn-link" (click)="togglePassengerForm()">
+          {{ showPassengerForm ? 'Hide' : 'Show' }} Details
+        </button>
+
+        <div *ngFor="let passenger of passengers.controls; let i = index"
+             class="passenger-form"
+             [formGroup]="$any(passenger)">
+          <h4>Traveler {{ i + 1 }}</h4>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>First Name *</label>
+              <input type="text" formControlName="firstName" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>Last Name *</label>
+              <input type="text" formControlName="lastName" class="form-control">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Date of Birth *</label>
+              <input type="date" formControlName="dateOfBirth" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>Passport Number</label>
+              <input type="text" formControlName="passportNumber" class="form-control">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Phone Number</label>
+              <input type="tel" formControlName="phoneNumber" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" formControlName="email" class="form-control">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment Method -->
+      <div class="form-section">
+        <h3>Payment Details</h3>
+
+        <div class="form-group">
+          <label>Payment Method *</label>
+          <select formControlName="paymentMethod" class="form-control">
+            <option [value]="PaymentMethod.STRIPE">Credit/Debit Card (Stripe)</option>
+            <option [value]="PaymentMethod.PAYPAL">PayPal</option>
+          </select>
+        </div>
+
+        <!-- Stripe Card Element -->
+        <div *ngIf="checkoutForm.get('paymentMethod')?.value === PaymentMethod.STRIPE"
+             class="stripe-card-section">
+          <div class="form-group">
+            <label>Cardholder Name *</label>
+            <input type="text" formControlName="cardholderName" class="form-control"
+                   placeholder="John Doe">
+          </div>
+
+          <div class="form-group">
+            <label>Card Information *</label>
+            <div id="card-element" class="stripe-card-element"></div>
+            <small class="help-text">Powered by Stripe - Secure Payment</small>
+          </div>
+
+          <div class="form-group checkbox-group">
+            <label>
+              <input type="checkbox" formControlName="savePaymentMethod">
+              <span>Save this card for future purchases</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- PayPal Buttons -->
+        <div *ngIf="checkoutForm.get('paymentMethod')?.value === PaymentMethod.PAYPAL"
+             class="paypal-section">
+          <p class="help-text">
+            <i class="material-icons">lock</i>
+            Secure payment powered by PayPal - Pay with PayPal or Card
+          </p>
+          <!-- PayPal buttons will render here -->
+          <div id="paypal-button-container"></div>
+        </div>
+      </div>
+
+      <!-- Order Summary -->
+      <div class="order-summary">
+        <h3>Order Summary</h3>
+        <div class="summary-row">
+          <span>Price per person:</span>
+          <span>{{ travel.price | currency }}</span>
+        </div>
+        <div class="summary-row">
+          <span>Number of travelers:</span>
+          <span>{{ checkoutForm.get('numberOfParticipants')?.value }}</span>
+        </div>
+        <div class="summary-row total">
+          <span><strong>Total Amount:</strong></span>
+          <span><strong>{{ totalAmount | currency }}</strong></span>
+        </div>
+      </div>
+
+      <!-- Terms & Conditions -->
+      <div class="form-group checkbox-group">
+        <label>
+          <input type="checkbox" formControlName="termsAccepted" required>
+          <span>
+            I agree to the <a href="/terms" target="_blank">Terms & Conditions</a>
+            and <a href="/privacy" target="_blank">Privacy Policy</a> *
+          </span>
+        </label>
+      </div>
+
+      <!-- Submit Button (hidden for PayPal since PayPal buttons handle payment) -->
+      <div class="form-actions" *ngIf="checkoutForm.get('paymentMethod')?.value !== PaymentMethod.PAYPAL">
+        <button type="button" class="btn btn-secondary" [routerLink]="['/travels', travelId]">
+          Cancel
+        </button>
+        <button type="submit"
+                class="btn btn-primary"
+                [disabled]="checkoutForm.invalid || isProcessing"
+                [title]="checkoutForm.invalid ? 'Please fill all required fields and accept terms' : 'Complete payment'">
+          <span *ngIf="!isProcessing">
+            <i class="material-icons">payment</i>
+            Pay {{ totalAmount | currency }}
+          </span>
+          <span *ngIf="isProcessing">
+            <i class="material-icons spin">refresh</i>
+            Processing...
+          </span>
+        </button>
+      </div>
+
+      <!-- Debug info (remove after testing) -->
+      <div *ngIf="checkoutForm.invalid" style="color: red; margin-top: 10px; font-size: 12px;">
+        <strong>Form is invalid. Please check:</strong>
+        <ul>
+          <li *ngIf="checkoutForm.get('numberOfParticipants')?.invalid">Number of participants</li>
+          <li *ngIf="checkoutForm.get('paymentMethod')?.invalid">Payment method</li>
+          <li *ngIf="checkoutForm.get('termsAccepted')?.invalid">✓ Accept Terms & Conditions (scroll down)</li>
+          <li *ngIf="passengers.invalid">Passenger details (check all required fields)</li>
+        </ul>
+      </div>
+    </form>
+  </div>
+
+  <!-- Security Badge -->
+  <div class="security-notice">
+    <i class="material-icons">lock</i>
+    <p>Your payment information is secure and encrypted</p>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div *ngIf="!travel" class="loading-container">
+  <div class="spinner"></div>
+  <p>Loading travel details...</p>
+</div>

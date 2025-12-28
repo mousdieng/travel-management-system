@@ -1,0 +1,161 @@
+<div class="min-h-screen bg-gray-50 py-8">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="mb-8 flex justify-between items-center">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Manager Rankings</h1>
+        <p class="mt-2 text-sm text-gray-600">Performance-based rankings of travel managers</p>
+      </div>
+      <a routerLink="/admin/dashboard" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition">
+        Back to Dashboard
+      </a>
+    </div>
+
+    <!-- Loading -->
+    @if (loading()) {
+      <div class="flex justify-center items-center h-64">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    }
+
+    <!-- Error -->
+    @if (error()) {
+      <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+        {{ error() }}
+      </div>
+    }
+
+    <!-- Rankings Table -->
+    @if (!loading() && rankings().length > 0) {
+      <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Manager</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Performance</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Travels</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Participants</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            @for (manager of rankings(); track manager.managerId) {
+              <tr class="hover:bg-gray-50 transition">
+                <!-- Rank -->
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span [class]="getRankBadge(manager.rank) + ' px-3 py-1 rounded-full text-sm font-bold'">
+                    #{{ manager.rank }}
+                  </span>
+                </td>
+
+                <!-- Manager Info -->
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center">
+                    @if (manager.profileImage) {
+                      <img [src]="manager.profileImage" alt="{{ manager.managerName }}" class="h-10 w-10 rounded-full mr-3">
+                    } @else {
+                      <div class="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold mr-3">
+                        {{ manager.managerName.charAt(0) }}
+                      </div>
+                    }
+                    <div>
+                      <div class="text-sm font-medium text-gray-900">{{ manager.managerName }}</div>
+                      <div class="text-sm text-gray-500">{{ manager.email }}</div>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Performance Score -->
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span [class]="getPerformanceBadge(manager.performanceScore) + ' px-3 py-1 rounded-full text-xs font-semibold'">
+                    {{ manager.performanceScore.toFixed(1) }}
+                  </span>
+                </td>
+
+                <!-- Travels -->
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm text-gray-900">{{ formatNumber(manager.totalTravelsOrganized) }} total</div>
+                  <div class="text-xs text-gray-500">{{ formatNumber(manager.completedTravels) }} completed</div>
+                </td>
+
+                <!-- Revenue -->
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm font-medium text-gray-900">{{ formatCurrency(manager.totalIncome) }}</div>
+                  <div class="text-xs text-gray-500">{{ formatCurrency(manager.lastMonthIncome) }} last month</div>
+                </td>
+
+                <!-- Rating -->
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center">
+                    <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    <span class="ml-1 text-sm text-gray-900">{{ manager.averageRating.toFixed(1) }}</span>
+                    <span class="ml-1 text-xs text-gray-500">({{ formatNumber(manager.totalReviews) }})</span>
+                  </div>
+                </td>
+
+                <!-- Participants -->
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {{ formatNumber(manager.totalParticipants) }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Detailed View for Top 3 -->
+      @if (rankings().length >= 3) {
+        <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+          @for (manager of rankings().slice(0, 3); track manager.managerId) {
+            <div class="bg-white rounded-lg shadow-lg p-6 border-t-4"
+                 [class.border-yellow-400]="manager.rank === 1"
+                 [class.border-gray-400]="manager.rank === 2"
+                 [class.border-orange-400]="manager.rank === 3">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">{{ manager.managerName }}</h3>
+                <span [class]="getRankBadge(manager.rank) + ' px-3 py-1 rounded-full text-sm font-bold'">
+                  #{{ manager.rank }}
+                </span>
+              </div>
+
+              <div class="space-y-3">
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-600">Performance Score:</span>
+                  <span class="font-semibold text-gray-900">{{ manager.performanceScore.toFixed(1) }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-600">Total Income:</span>
+                  <span class="font-semibold text-gray-900">{{ formatCurrency(manager.totalIncome) }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-600">Average Rating:</span>
+                  <span class="font-semibold text-gray-900">{{ manager.averageRating.toFixed(1) }} / 5.0</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-600">Participants:</span>
+                  <span class="font-semibold text-gray-900">{{ formatNumber(manager.totalParticipants) }}</span>
+                </div>
+                @if (manager.reportsReceived > 0) {
+                  <div class="flex justify-between text-sm">
+                    <span class="text-red-600">Reports:</span>
+                    <span class="font-semibold text-red-600">{{ manager.reportsReceived }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+
+    @if (!loading() && rankings().length === 0) {
+      <div class="bg-white rounded-lg shadow p-12 text-center">
+        <p class="text-gray-500">No manager rankings available</p>
+      </div>
+    }
+  </div>
+</div>

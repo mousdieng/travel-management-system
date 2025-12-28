@@ -1,0 +1,266 @@
+<div class="min-h-screen bg-gray-50 py-8">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+      <p class="mt-2 text-sm text-gray-600">
+        Platform analytics and performance overview
+      </p>
+    </div>
+
+    <!-- Loading State -->
+    @if (loading()) {
+      <div class="flex justify-center items-center h-64">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    }
+
+    <!-- Error State -->
+    @if (error()) {
+      <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+        {{ error() }}
+      </div>
+    }
+
+    <!-- Analytics Content -->
+    @if (analytics() && !loading()) {
+      <div class="space-y-6">
+        <!-- Quick Stats Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <!-- Total Users -->
+          <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-gray-600">Total Users</p>
+                <p class="text-2xl font-bold text-gray-900">{{ formatNumber(analytics()!.totalUsers || 0) }}</p>
+                <p class="text-xs text-gray-500 mt-1">
+                  Managers: {{ formatNumber(analytics()!.totalManagers || 0) }}
+                </p>
+              </div>
+              <div class="p-3 bg-blue-100 rounded-full">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Platform Income -->
+          <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-gray-600">Platform Income</p>
+                <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(analytics()!.platformIncome || 0) }}</p>
+                <p class="text-xs text-gray-500 mt-1">
+                  Total revenue
+                </p>
+              </div>
+              <div class="p-3 bg-green-100 rounded-full">
+                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Total Travels -->
+          <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-gray-600">Total Travels</p>
+                <p class="text-2xl font-bold text-gray-900">{{ formatNumber(analytics()!.totalTravels || 0) }}</p>
+                <p class="text-xs text-gray-500 mt-1">
+                  {{ formatNumber(analytics()!.activeTravels || 0) }} active
+                </p>
+              </div>
+              <div class="p-3 bg-purple-100 rounded-full">
+                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pending Reports -->
+          <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-gray-600">Pending Reports</p>
+                <p class="text-2xl font-bold text-gray-900">{{ formatNumber(analytics()!.pendingReports || 0) }}</p>
+                <p class="text-xs text-gray-500 mt-1">
+                  Require review
+                </p>
+              </div>
+              <div class="p-3 bg-red-100 rounded-full">
+                <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Navigation Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <a routerLink="/admin/manager-rankings" class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition cursor-pointer">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Manager Rankings</h3>
+            <p class="text-sm text-gray-600 mb-4">View and analyze manager performance</p>
+            <div class="flex items-center text-blue-600 text-sm font-medium">
+              View Rankings
+              <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </a>
+
+          <a routerLink="/admin/travel-performance" class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition cursor-pointer">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Travel Performance</h3>
+            <p class="text-sm text-gray-600 mb-4">Top performing travels and trends</p>
+            <div class="flex items-center text-blue-600 text-sm font-medium">
+              View Performance
+              <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </a>
+
+          <a routerLink="/admin/income-analytics" class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition cursor-pointer">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Income Analytics</h3>
+            <p class="text-sm text-gray-600 mb-4">Monthly income and revenue trends</p>
+            <div class="flex items-center text-blue-600 text-sm font-medium">
+              View Analytics
+              <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </a>
+
+          <a routerLink="/admin/feedbacks" class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition cursor-pointer">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Feedbacks</h3>
+            <p class="text-sm text-gray-600 mb-4">User satisfaction and reviews</p>
+            <div class="flex items-center text-blue-600 text-sm font-medium">
+              View Feedbacks
+              <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </a>
+
+          <a routerLink="/admin/reports" class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition cursor-pointer">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Reports Review</h3>
+            <p class="text-sm text-gray-600 mb-4">Review and manage user reports</p>
+            <div class="flex items-center text-blue-600 text-sm font-medium">
+              View Reports
+              <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </a>
+
+          <a routerLink="/admin/payment-methods" class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition cursor-pointer">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Payment Methods</h3>
+            <p class="text-sm text-gray-600 mb-4">Manage user payment methods</p>
+            <div class="flex items-center text-blue-600 text-sm font-medium">
+              View Payment Methods
+              <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </a>
+
+          <a routerLink="/admin/travel-history" class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition cursor-pointer">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Travel History</h3>
+            <p class="text-sm text-gray-600 mb-4">Complete travel records</p>
+            <div class="flex items-center text-blue-600 text-sm font-medium">
+              View History
+              <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </a>
+        </div>
+
+        <!-- Detailed Statistics -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- User Breakdown -->
+          <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">User Distribution</h3>
+            <div class="space-y-4">
+              <div class="flex justify-between items-center">
+                <span class="text-gray-600">Travelers</span>
+                <span class="text-gray-900 font-semibold">{{ formatNumber(analytics()!.totalTravelers || 0) }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-600">Managers</span>
+                <span class="text-gray-900 font-semibold">{{ formatNumber(analytics()!.totalManagers || 0) }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-600">Total Users</span>
+                <span class="text-gray-900 font-semibold">{{ formatNumber(analytics()!.totalUsers || 0) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Travel Status -->
+          <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Travel Status</h3>
+            <div class="space-y-4">
+              <div class="flex justify-between items-center">
+                <span class="text-gray-600">Total</span>
+                <span class="text-gray-900 font-semibold">{{ formatNumber(analytics()!.totalTravels || 0) }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-600">Active</span>
+                <span class="text-green-600 font-semibold">{{ formatNumber(analytics()!.activeTravels || 0) }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-600">Completed</span>
+                <span class="text-blue-600 font-semibold">{{ formatNumber(analytics()!.completedTravels || 0) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Feedback Statistics -->
+          <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Feedback Overview</h3>
+            <div class="space-y-4">
+              <div class="flex justify-between items-center">
+                <span class="text-gray-600">Total Feedbacks</span>
+                <span class="text-gray-900 font-semibold">{{ formatNumber(analytics()!.totalFeedbacks || 0) }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-600">Average Rating</span>
+                <span class="text-yellow-600 font-semibold">
+                  {{ analytics()!.averagePlatformRating ? (analytics()!.averagePlatformRating | number:'1.1-1') : '0.0' }} ★
+                </span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-600">Pending Reports</span>
+                <span class="text-red-600 font-semibold">{{ formatNumber(analytics()!.pendingReports || 0) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Financial Overview -->
+          <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Financial Overview</h3>
+            <div class="space-y-4">
+              <div class="flex justify-between items-center">
+                <span class="text-gray-600">Platform Income</span>
+                <span class="text-gray-900 font-semibold">{{ formatCurrency(analytics()!.platformIncome || 0) }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-600">Total Travels</span>
+                <span class="text-gray-900 font-semibold">{{ formatNumber(analytics()!.totalTravels || 0) }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-600">Active Travels</span>
+                <span class="text-green-600 font-semibold">{{ formatNumber(analytics()!.activeTravels || 0) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

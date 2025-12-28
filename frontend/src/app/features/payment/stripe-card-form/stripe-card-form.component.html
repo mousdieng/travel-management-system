@@ -1,0 +1,146 @@
+<div class="stripe-card-form-container">
+  <!-- Payment Amount Display -->
+  <div class="payment-amount" *ngIf="amount > 0">
+    <h3>Payment Amount</h3>
+    <div class="amount-display">
+      {{ formatAmount() }}
+    </div>
+  </div>
+
+  <!-- Card Form -->
+  <form [formGroup]="cardForm" (ngSubmit)="handleSubmit()">
+    <!-- Cardholder Name -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Cardholder Name</mat-label>
+      <input matInput formControlName="cardholderName" required>
+      <mat-icon matPrefix>person</mat-icon>
+      <mat-error *ngIf="cardForm.get('cardholderName')?.hasError('required')">
+        Cardholder name is required
+      </mat-error>
+      <mat-error *ngIf="cardForm.get('cardholderName')?.hasError('minlength')">
+        Name must be at least 3 characters
+      </mat-error>
+    </mat-form-field>
+
+    <!-- Stripe Card Element -->
+    <div class="card-element-container">
+      <label class="card-element-label">Card Information</label>
+      <div id="card-element" class="card-element">
+        <!-- Stripe Card Element will be mounted here -->
+      </div>
+      <div class="card-element-hint" *ngIf="!cardElementMounted">
+        <mat-icon>info</mat-icon>
+        <span>Loading secure payment form...</span>
+      </div>
+      <div class="secure-badge">
+        <mat-icon>lock</mat-icon>
+        <span>Secured by Stripe</span>
+      </div>
+    </div>
+
+    <!-- Billing Address Section -->
+    <div class="billing-address-section">
+      <h4>Billing Address</h4>
+
+      <!-- Address Line 1 -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Address Line 1</mat-label>
+        <input matInput formControlName="addressLine1" required>
+        <mat-icon matPrefix>home</mat-icon>
+        <mat-error *ngIf="cardForm.get('addressLine1')?.hasError('required')">
+          Address is required
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Address Line 2 -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Address Line 2 (Optional)</mat-label>
+        <input matInput formControlName="addressLine2">
+        <mat-icon matPrefix>home</mat-icon>
+      </mat-form-field>
+
+      <!-- City and State -->
+      <div class="form-row">
+        <mat-form-field appearance="outline">
+          <mat-label>City</mat-label>
+          <input matInput formControlName="city" required>
+          <mat-icon matPrefix>location_city</mat-icon>
+          <mat-error *ngIf="cardForm.get('city')?.hasError('required')">
+            City is required
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>State/Province</mat-label>
+          <input matInput formControlName="state" required>
+          <mat-icon matPrefix>map</mat-icon>
+          <mat-error *ngIf="cardForm.get('state')?.hasError('required')">
+            State is required
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- Postal Code and Country -->
+      <div class="form-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Postal Code</mat-label>
+          <input matInput formControlName="postalCode" required>
+          <mat-icon matPrefix>markunread_mailbox</mat-icon>
+          <mat-error *ngIf="cardForm.get('postalCode')?.hasError('required')">
+            Postal code is required
+          </mat-error>
+          <mat-error *ngIf="cardForm.get('postalCode')?.hasError('pattern')">
+            Invalid postal code format
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Country</mat-label>
+          <mat-select formControlName="country" required>
+            <mat-option *ngFor="let country of countries" [value]="country.code">
+              {{ country.name }}
+            </mat-option>
+          </mat-select>
+          <mat-icon matPrefix>public</mat-icon>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- Save Card Option -->
+    <div class="save-card-option">
+      <mat-checkbox formControlName="saveCard">
+        Save this card for future payments
+      </mat-checkbox>
+    </div>
+
+    <!-- Security Notice -->
+    <div class="security-notice">
+      <mat-icon>verified_user</mat-icon>
+      <div class="notice-content">
+        <strong>Your payment is secure</strong>
+        <p>We use industry-standard encryption to protect your card information.
+           Your card details are never stored on our servers.</p>
+      </div>
+    </div>
+
+    <!-- Submit Button -->
+    <div class="submit-section">
+      <button mat-raised-button color="primary" type="submit"
+              [disabled]="isProcessing || !cardForm.valid || !cardElementMounted"
+              class="pay-button">
+        <mat-spinner diameter="20" *ngIf="isProcessing"></mat-spinner>
+        <mat-icon *ngIf="!isProcessing">payment</mat-icon>
+        <span *ngIf="!isProcessing && amount > 0">Pay {{ formatAmount() }}</span>
+        <span *ngIf="!isProcessing && amount === 0">Add Payment Method</span>
+        <span *ngIf="isProcessing">Processing...</span>
+      </button>
+    </div>
+  </form>
+
+  <!-- Powered by Stripe Badge -->
+  <div class="powered-by">
+    <span>Powered by</span>
+    <img src="assets/images/stripe-logo.svg" alt="Stripe" onerror="this.style.display='none'">
+    <span *ngIf="!stripe">Stripe</span>
+  </div>
+</div>
