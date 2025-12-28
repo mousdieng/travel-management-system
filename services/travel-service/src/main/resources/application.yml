@@ -3,7 +3,7 @@ spring:
     name: travel-service
 
   config:
-    import: optional:file:../../.env[.properties]
+    import: optional:file:/home/moussa/dev/travel-management-system/.env[.properties]
 
   # PostgreSQL Database Configuration
   datasource:
