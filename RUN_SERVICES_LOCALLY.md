@@ -10,6 +10,16 @@ This guide explains how to run the microservices locally without Docker.
 4. Neo4j running on localhost:7688
 5. Kafka running on localhost:9092
 
+## Maven Configuration Note
+
+The Nexus mirror in `~/.m2/settings.xml` has been temporarily disabled to allow Maven Central access. This was necessary because the local Nexus server (localhost:8081) is not running. If you want to re-enable the Nexus mirror, restore the backup:
+
+```bash
+cp ~/.m2/settings.xml.backup ~/.m2/settings.xml
+```
+
+Then ensure your Nexus server is running before building the services.
+
 ## Automatic Environment Variable Loading
 
 All microservices are configured to automatically load environment variables from the `.env` file in the project root using Spring Boot's `spring.config.import` feature. **No manual environment variable export is required!**
