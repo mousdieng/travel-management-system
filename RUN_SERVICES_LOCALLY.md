@@ -22,7 +22,7 @@ Then ensure your Nexus server is running before building the services.
 
 ## Automatic Environment Variable Loading
 
-All microservices are configured to automatically load environment variables from the `.env` file in the project root using Spring Boot's `spring.config.import` feature. **No manual environment variable export is required!**
+All microservices are configured to automatically load environment variables from the `.env` file in the project root using **Spring Boot's native `spring.config.import`** feature (available since Spring Boot 2.4+). **No manual environment variable export or third-party libraries required!**
 
 Simply run any service directly:
 
@@ -32,6 +32,18 @@ mvn spring-boot:run
 ```
 
 The `.env` file will be automatically loaded, and all environment variables (STRIPE_API_KEY, JWT_SECRET, etc.) will be available to the service.
+
+### How It Works
+
+Each service's `application.yml` contains:
+
+```yaml
+spring:
+  config:
+    import: optional:file:../../.env[.properties]
+```
+
+This configuration tells Spring Boot to import the `.env` file from the project root (two directories up from the service directory) as a property source. The `optional:` prefix means the application will start even if the `.env` file doesn't exist (falling back to default values).
 
 ## IntelliJ IDEA
 
