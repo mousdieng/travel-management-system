@@ -56,10 +56,13 @@ public class SecurityConfig {
                     "/api/v1/webhooks/paypal"
                 ).permitAll()
 
-                // Internal service communication endpoints (cascade deletes)
+                // Internal service communication endpoints (cascade deletes, stats)
                 .requestMatchers(HttpMethod.DELETE,
                     "/api/v1/payments/user/{userId}/cascade-delete",
                     "/api/v1/payment-methods/user/{userId}/cascade-delete"
+                ).permitAll()
+                .requestMatchers(HttpMethod.GET,
+                    "/api/v1/payments/stats"
                 ).permitAll()
 
                 // All payment endpoints require authentication

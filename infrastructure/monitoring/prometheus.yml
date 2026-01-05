@@ -1,0 +1,102 @@
+# Prometheus Configuration for Travel Management System
+# Scrapes metrics from all microservices
+
+global:
+  scrape_interval: 15s      # How frequently to scrape targets
+  evaluation_interval: 15s  # How frequently to evaluate rules
+  scrape_timeout: 10s
+
+  # Attach these labels to any time series or alerts
+  external_labels:
+    monitor: 'travel-management-system'
+    environment: 'production'
+
+# Alertmanager configuration (optional - uncomment if you add Alertmanager)
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets:
+#           - alertmanager:9093
+
+# Load rules once and periodically evaluate them
+# rule_files:
+#   - "alerts.yml"
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+
+  # User Service
+  - job_name: 'user-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['user-service:9082']
+        labels:
+          service: 'user-service'
+          tier: 'backend'
+
+  # Travel Service
+  - job_name: 'travel-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['travel-service:9083']
+        labels:
+          service: 'travel-service'
+          tier: 'backend'
+
+  # Payment Service
+  - job_name: 'payment-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['payment-service:9084']
+        labels:
+          service: 'payment-service'
+          tier: 'backend'
+
+  # Feedback Service
+  - job_name: 'feedback-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['feedback-service:9085']
+        labels:
+          service: 'feedback-service'
+          tier: 'backend'
+
+  # Gateway Service
+  - job_name: 'gateway-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['gateway-service:9080']
+        labels:
+          service: 'gateway-service'
+          tier: 'gateway'
+
+  # Registry Service (Eureka)
+  - job_name: 'registry-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['registry-service:8761']
+        labels:
+          service: 'registry-service'
+          tier: 'infrastructure'
+
+  # PostgreSQL (using postgres_exporter if added)
+  # - job_name: 'postgresql'
+  #   static_configs:
+  #     - targets: ['postgres-exporter:9187']
+  #       labels:
+  #         service: 'postgresql'
+  #         tier: 'database'
+
+  # Redis (using redis_exporter if added)
+  # - job_name: 'redis'
+  #   static_configs:
+  #     - targets: ['redis-exporter:9121']
+  #       labels:
+  #         service: 'redis'
+  #         tier: 'cache'

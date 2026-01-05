@@ -112,6 +112,16 @@ export const routes: Routes = [
         path: 'travel-performance',
         loadComponent: () => import('./features/admin/travel-performance/travel-performance.component')
           .then(m => m.TravelPerformanceComponent)
+      },
+      {
+        path: 'travel-history',
+        loadComponent: () => import('./features/admin/travel-performance/travel-performance.component')
+          .then(m => m.TravelPerformanceComponent)
+      },
+      {
+        path: 'income-analytics',
+        loadComponent: () => import('./features/admin/analytics/admin-analytics.component')
+          .then(m => m.AdminAnalyticsComponent)
       }
     ]
   },

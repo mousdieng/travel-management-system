@@ -1,7 +1,17 @@
 version: '3.8'
 
 networks:
+  # Main application network
   travelms-network:
+    driver: bridge
+
+  # Database network - isolates database tier
+  # Services that need database access must join both networks
+  database-network:
+    driver: bridge
+
+  # Monitoring network - isolates monitoring tools
+  monitoring-network:
     driver: bridge
 
 volumes:
@@ -14,6 +24,8 @@ volumes:
   prometheus_data:
   grafana_data:
   minio_data:
+  vault_data:
+  vault_logs:
 
 services:
   # ============================================================================
@@ -56,7 +68,8 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh:ro
     networks:
-      - travelms-network
+      - database-network  # Database tier network
+      - travelms-network  # Backend services access
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -116,7 +129,8 @@ services:
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
     networks:
-      - travelms-network
+      - database-network  # Database tier network
+      - travelms-network  # Backend services access
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
       interval: 30s
@@ -199,6 +213,36 @@ services:
       timeout: 10s
       retries: 5
       start_period: 60s
+
+  # ============================================================================
+  # SECURITY SERVICES
+  # ============================================================================
+
+  # HashiCorp Vault - Secrets Management
+  vault:
+    image: hashicorp/vault:1.15
+    container_name: vault
+    ports:
+      - "8200:8200"
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: ${VAULT_ROOT_TOKEN:-root-token}
+      VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+      VAULT_ADDR: http://0.0.0.0:8200
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - vault_data:/vault/file
+      - vault_logs:/vault/logs
+      - ./vault-scripts:/vault/scripts:ro
+    networks:
+      - travelms-network
+    command: server -dev
+    healthcheck:
+      test: ["CMD", "vault", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   # ============================================================================
   # MICROSERVICES
@@ -384,39 +428,40 @@ services:
   # ============================================================================
 
   # Prometheus
-#  prometheus:
-#    image: prom/prometheus:latest
-#    container_name: prometheus
-#    ports:
-#      - "9090:9090"
-#    volumes:
-#      - ./infrastructure/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-#      - prometheus_data:/prometheus
-#    command:
-#      - '--config.file=/etc/prometheus/prometheus.yml'
-#      - '--storage.tsdb.path=/prometheus'
-#    networks:
-#      - travelms-network
-#    profiles:
-#      - monitoring
-#
-#  # Grafana
-#  grafana:
-#    image: grafana/grafana:latest
-#    container_name: grafana
-#    ports:
-#      - "3000:3000"
-#    environment:
-#      - GF_SECURITY_ADMIN_USER=admin
-#      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
-#    volumes:
-#      - grafana_data:/var/lib/grafana
-#    depends_on:
-#      - prometheus
-#    networks:
-#      - travelms-network
-#    profiles:
-#      - monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infrastructure/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - monitoring-network  # Monitoring tier network
+      - travelms-network     # Access to microservices
+    profiles:
+      - monitoring
+
+  # Grafana
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring-network  # Monitoring tier network
+    profiles:
+      - monitoring
 
   # ============================================================================
   # CI/CD (Optional - comment out if not needed)

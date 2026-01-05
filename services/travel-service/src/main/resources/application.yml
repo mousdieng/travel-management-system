@@ -44,6 +44,12 @@ spring:
 # Server Configuration
 server:
   port: ${PORT:9083}
+  ssl:
+    enabled: ${SSL_ENABLED:true}
+    key-store: ${SSL_KEY_STORE:classpath:keystore/travel-service.p12}
+    key-store-password: ${SSL_KEY_STORE_PASSWORD:changeit}
+    key-store-type: PKCS12
+    key-alias: travel-service
   servlet:
     context-path: /
 

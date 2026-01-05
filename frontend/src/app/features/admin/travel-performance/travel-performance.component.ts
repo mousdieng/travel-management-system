@@ -233,14 +233,17 @@ export class TravelPerformanceComponent implements OnInit {
     }
   }
 
-  getPerformanceScoreBadge(score: number): { class: string; label: string } {
+  getPerformanceScoreBadge(score: number | null | undefined): { class: string; label: string } {
+    if (!score || score < 40) return { class: 'bg-red-100 text-red-800', label: 'Needs Attention' };
     if (score >= 80) return { class: 'bg-green-100 text-green-800', label: 'Excellent' };
     if (score >= 60) return { class: 'bg-blue-100 text-blue-800', label: 'Good' };
-    if (score >= 40) return { class: 'bg-yellow-100 text-yellow-800', label: 'Fair' };
-    return { class: 'bg-red-100 text-red-800', label: 'Needs Attention' };
+    return { class: 'bg-yellow-100 text-yellow-800', label: 'Fair' };
   }
 
-  formatCurrency(amount: number): string {
+  formatCurrency(amount: number | null | undefined): string {
+    if (amount === null || amount === undefined) {
+      return '$0';
+    }
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
@@ -249,11 +252,17 @@ export class TravelPerformanceComponent implements OnInit {
     }).format(amount);
   }
 
-  formatPercentage(value: number): string {
+  formatPercentage(value: number | null | undefined): string {
+    if (value === null || value === undefined) {
+      return '0.0%';
+    }
     return `${value.toFixed(1)}%`;
   }
 
-  getStarArray(rating: number): number[] {
+  getStarArray(rating: number | null | undefined): number[] {
+    if (!rating) {
+      return [];
+    }
     return Array(Math.floor(rating)).fill(0);
   }
 }

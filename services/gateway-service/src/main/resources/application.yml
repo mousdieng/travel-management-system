@@ -155,7 +155,41 @@ spring:
                 name: travel-service
                 fallbackUri: forward:/fallback/travel-service
 
+        # Travel Service - Admin Analytics Routes (Protected)
+        - id: travel-admin-analytics
+          uri: lb://travel-service
+          predicates:
+            - Path=/api/v1/admin/analytics/travels/**
+          filters:
+            - Authentication
+            - name: CircuitBreaker
+              args:
+                name: travel-service
+                fallbackUri: forward:/fallback/travel-service
+
+        - id: travel-admin-rankings
+          uri: lb://travel-service
+          predicates:
+            - Path=/api/v1/admin/rankings/**
+          filters:
+            - Authentication
+            - name: CircuitBreaker
+              args:
+                name: travel-service
+                fallbackUri: forward:/fallback/travel-service
+
         # Payment Service Routes
+        - id: payment-methods-protected
+          uri: lb://payment-service
+          predicates:
+            - Path=/api/v1/payment-methods/**
+          filters:
+            - Authentication
+            - name: CircuitBreaker
+              args:
+                name: payment-service
+                fallbackUri: forward:/fallback/payment-service
+
         - id: payment-service-protected
           uri: lb://payment-service
           predicates:
@@ -247,6 +281,29 @@ spring:
                 name: feedback-service
                 fallbackUri: forward:/fallback/feedback-service
 
+        # Feedback Service - Admin Routes (Protected)
+        - id: feedback-admin
+          uri: lb://feedback-service
+          predicates:
+            - Path=/api/v1/admin/feedbacks/**
+          filters:
+            - Authentication
+            - name: CircuitBreaker
+              args:
+                name: feedback-service
+                fallbackUri: forward:/fallback/feedback-service
+
+        - id: feedback-admin-analytics
+          uri: lb://feedback-service
+          predicates:
+            - Path=/api/v1/admin/analytics/feedbacks/**
+          filters:
+            - Authentication
+            - name: CircuitBreaker
+              args:
+                name: feedback-service
+                fallbackUri: forward:/fallback/feedback-service
+
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
 
@@ -302,7 +359,13 @@ spring:
 
 # Server Configuration
 server:
-  port: ${SERVER_PORT:9080}
+  port: ${SERVER_PORT:9443}
+  ssl:
+    enabled: ${SSL_ENABLED:true}
+    key-store: ${SSL_KEY_STORE:classpath:keystore/gateway.p12}
+    key-store-password: ${SSL_KEY_STORE_PASSWORD:changeit}
+    key-store-type: PKCS12
+    key-alias: gateway
 
 jwt:
   secret: ${JWT_SECRET:mySecretKeyForJWTTokenGeneration2024}
@@ -436,7 +499,9 @@ eureka:
       defaultZone: ${EUREKA_SERVER_URL:http://registry-service:8761/eureka/}
 
 server:
-  port: 9080
+  port: 9443
+  ssl:
+    enabled: true
 
 logging:
   level:

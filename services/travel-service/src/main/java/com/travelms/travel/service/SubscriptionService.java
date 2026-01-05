@@ -284,7 +284,7 @@ public class SubscriptionService {
         log.info("Successfully cascade deleted {} subscriptions for user: {}", subscriptions.size(), userId);
     }
 
-    private SubscriptionDTO convertToDTO(Subscription subscription) {
+    public SubscriptionDTO convertToDTO(Subscription subscription) {
         return SubscriptionDTO.builder()
                 .id(subscription.getId())
                 .travelerId(subscription.getTravelerId())

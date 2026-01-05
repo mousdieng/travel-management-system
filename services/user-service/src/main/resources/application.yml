@@ -31,6 +31,12 @@ spring:
 
 server:
   port: ${SERVER_PORT:9082}
+  ssl:
+    enabled: ${SSL_ENABLED:true}
+    key-store: ${SSL_KEY_STORE:classpath:keystore/user-service.p12}
+    key-store-password: ${SSL_KEY_STORE_PASSWORD:changeit}
+    key-store-type: PKCS12
+    key-alias: user-service
 
 eureka:
   client:

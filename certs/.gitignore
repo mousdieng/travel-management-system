@@ -1,0 +1,10 @@
+# Ignore all certificate files to prevent committing private keys
+*.pem
+*.p12
+*.csr
+*.srl
+
+# Keep only the generation script
+!generate-certs.sh
+!.gitignore
+!README.md
